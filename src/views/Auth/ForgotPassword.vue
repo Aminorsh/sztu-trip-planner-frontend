@@ -22,13 +22,15 @@
           />
         </el-form-item>
 
+        
+
         <el-form-item>
           <el-button
             type="primary"
             :loading="loading"
             @click="submitForgot"
             class="auth-btn"
-          >发送重置链接</el-button>
+          >发送验证码</el-button>
         </el-form-item>
 
         <div class="auth-links">

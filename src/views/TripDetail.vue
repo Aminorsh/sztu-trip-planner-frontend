@@ -62,7 +62,7 @@
         <section class="trip-map">
           <div class="map-container" ref="mapContainer">
             <!-- 如果地图未接入，临时用一张背景做占位 -->
-            <div class="bg-image" :style="{ backgroundImage: `url(${heroTravel5})` }"></div>
+            <!-- <div class="bg-image" :style="{ backgroundImage: `url(${heroTravel5})` }"></div> -->
           </div>
           <div class="map-tools">
             <el-button icon="el-icon-zoom-in" circle @click="zoomIn" />
@@ -88,9 +88,12 @@
         </section>
         <!-- 右侧：属性编辑 / 打卡等 -->
         <aside class="right-side">
+          
           <div v-if="selectedItem">
+            
             <h3>编辑项：{{ selectedItem.name }}</h3>
             <el-form :model="selectedItem" label-position="top">
+              
               <el-form-item label="名称">
                 <el-input v-model="selectedItem.name" />
               </el-form-item>
@@ -301,6 +304,14 @@ export default {
 .bg-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.4); z-index:1; }
 .trip-inner { position:relative; z-index:2; display:flex; flex-direction:column; height:100%; }
 
+
+.trip-status{
+  text-align: center;
+  background: #e6e2ebb3;
+  color:#5F5F97;
+  border: 2px solid e6e2ebb3;
+}
+
 .trip-page {
   position: relative;
   width: 100%;
@@ -364,12 +375,31 @@ export default {
   display: flex;
   overflow: hidden;
 }
+
+.el-button--text{
+  --el-button-hover-text-color:#5F5F97;
+  border: #e9e9f0;
+}
+.el-button--primary{
+  border: #e9e9f0;
+  --el-button-hover-text-color:#5F5F97;
+}
+.el-button{
+  text-align: center;
+  background: #e6e2ebb3;
+  color:#5F5F97;
+  border: 2px solid e6e2ebb3;
+}
+.el-button:hover {
+  background: #fcf9fd9b;
+  color:#9898ed
+}
 .left-side {
   width: 280px;
   border-right: 1px solid rgba(245, 242, 242, 0.918);
   padding: 16px;
   background: rgba(243, 241, 244, 0.284);
-  border-radius: 5px;
+  border-radius: 20px;
 }
 .day-switcher {
   display: flex;
@@ -408,9 +438,13 @@ export default {
   flex: 1;
 }
 .add-item-btn {
+  padding: 8px;
+  
+  /* padding-right: 8px; */
+  font-size: 0.9rem;
   text-align: center;
   margin-top: 12px;
-  color: #f5f5fa;
+  color: #5F5F97;
   display: block;
 }
 .calendar-view {
@@ -510,12 +544,16 @@ export default {
 }
 
 /* 右侧 */
+.el-button--small { 
+  border: #a8a6f7;
+}
 .right-side {
   /* border-radius: 20px; */
   width: 260px;
   border-left: 1px solid rgba(246, 243, 243, 0.3);
   padding: 16px;
-  background: rgba(255,255,255,0.95);
+  border-radius: 20px;
+  /* background: rgba(255,255,255,0.95); */
   overflow-y: auto;
 }
 .no-selection {

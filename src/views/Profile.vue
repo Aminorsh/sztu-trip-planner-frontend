@@ -1,17 +1,19 @@
 <!-- src/views/Profile.vue -->
 <template>
+  <!-- <div class="bg-image" :style="{ backgroundImage: `url(${heroTravel})` }"></div> -->
   <div class="profile-page">
+    
     <!-- 顶部导航栏 -->
     <header class="profile-header">
       <div class="container header-inner">
         <div class="logo">TravelPlanner</div>
         <nav class="nav-menu">
           <el-button type="text" class="nav-btn" @click="goHome">首页</el-button>
-          <el-button type="text" class="nav-btn" @click="goDashboard">我的仪表盘</el-button>
+          <el-button type="text" class="nav-btn" @click="goDashboard">我的行程</el-button>
           <el-button type="text" class="nav-btn" @click="goProfile" disabled>资料 / 设置</el-button>
         </nav>
         <div class="auth-buttons">
-          <el-button class="btn-small btn-soft" @click="onLogout">注销</el-button>
+          <el-button class="btn-small btn-soft" @click="onLogout">退出登录</el-button>
         </div>
       </div>
     </header>
@@ -80,38 +82,38 @@
       </el-form>
 
       <!-- 通知 / 推送偏好设置 -->
-      <h2 class="section-title">通知 & 推送偏好</h2>
-      <el-form :model="preferences" label-position="top" class="form-section">
-        <el-form-item>
-          <el-switch v-model="preferences.emailNotifications" active-text="邮箱通知" inactive-text="关闭邮箱通知" />
-        </el-form-item>
-        <el-form-item>
-          <el-switch v-model="preferences.pushNotifications" active-text="移动推送" inactive-text="关闭推送" />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="onSavePreferences" :loading="loadingPref">保存偏好</el-button>
-        </el-form-item>
-      </el-form>
+      <!-- <h2 class="section-title">通知 & 推送偏好</h2> -->
+      <!-- <el-form :model="preferences" label-position="top" class="form-section"> -->
+        <!-- <el-form-item> -->
+          <!-- <el-switch v-model="preferences.emailNotifications" active-text="邮箱通知" inactive-text="关闭邮箱通知" /> -->
+        <!-- </el-form-item> -->
+        <!-- <el-form-item> -->
+          <!-- <el-switch v-model="preferences.pushNotifications" active-text="移动推送" inactive-text="关闭推送" /> -->
+        <!-- </el-form-item> -->
+        <!-- <el-form-item> -->
+          <!-- <el-button type="primary" @click="onSavePreferences" :loading="loadingPref">保存偏好</el-button> -->
+        <!-- </el-form-item> -->
+      <!-- </el-form> -->
 
       <!-- 隐私 / 分享默认设置 -->
-      <h2 class="section-title">隐私 & 分享默认设置</h2>
-      <el-form :model="privacy" label-position="top" class="form-section">
-        <el-form-item label="默认行程分享状态">
-          <el-radio-group v-model="privacy.defaultShareStatus">
-            <el-radio label="public">公开</el-radio>
-            <el-radio label="private">仅自己可见</el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="onSavePrivacy" :loading="loadingPrivacy">保存隐私设置</el-button>
-        </el-form-item>
-      </el-form>
+      <!-- <h2 class="section-title">隐私 & 分享默认设置</h2> -->
+      <!-- <el-form :model="privacy" label-position="top" class="form-section"> -->
+        <!-- <el-form-item label="默认行程分享状态"> -->
+          <!-- <el-radio-group v-model="privacy.defaultShareStatus"> -->
+            <!-- <el-radio label="public">公开</el-radio> -->
+            <!-- <el-radio label="private">仅自己可见</el-radio> -->
+          <!-- </el-radio-group> -->
+        <!-- </el-form-item> -->
+        <!-- <el-form-item> -->
+          <!-- <el-button type="primary" @click="onSavePrivacy" :loading="loadingPrivacy">保存隐私设置</el-button> -->
+        <!-- </el-form-item> -->
+      <!-- </el-form> -->
 
       <!-- 删除账号按钮 -->
-      <section class="danger-section">
-        <h2 class="section-title danger-title">删除账号</h2>
-        <el-button type="danger" @click="onDeleteAccount">删除帐号</el-button>
-      </section>
+      <!-- <section class="danger-section"> -->
+        <!-- <h2 class="section-title danger-title">删除账号</h2> -->
+        <!-- <el-button type="danger" @click="onDeleteAccount">删除帐号</el-button> -->
+      <!-- </section> -->
 
     </section>
 
@@ -133,9 +135,11 @@
   </div>
 </template>
 
+
 <script>
 // 引入 Element Plus 组件
 import { ElButton, ElInput, ElUpload, ElForm, ElFormItem, ElSwitch, ElRadioGroup, ElRadio } from 'element-plus'
+import heroTravel from '@/assets/images/hero-travel4.jpg'
 
 export default {
   name: 'Profile',
@@ -151,6 +155,7 @@ export default {
   },
   data() {
     return {
+      heroTravel,
       loadingProfile: false,
       loadingPassword: false,
       loadingPref: false,
@@ -266,7 +271,10 @@ export default {
 }
 </script>
 
+
 <style scoped>
+
+.bg-image { position:absolute; inset:0; background-repeat:no-repeat; background-position:center; background-size:cover; z-index:0; }
 .profile-page {
   font-family: 'Poppins', 'Nunito Sans', sans-serif;
   color: #303133;
