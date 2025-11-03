@@ -17,7 +17,16 @@
         <el-form-item prop="username">
           <el-input
             v-model="registerForm.username"
-            placeholder="用户名 / 邮箱"
+            placeholder="用户名 "
+            prefix-icon="el-icon-user"
+            clearable
+          />
+        </el-form-item>
+
+        <el-form-item prop="email">
+          <el-input
+            v-model="registerForm.email"
+            placeholder="邮箱"
             prefix-icon="el-icon-user"
             clearable
           />
@@ -87,6 +96,7 @@ export default {
       registerForm: {
         username: '',
         password: '',
+        email:'',
         confirmPassword: '',
         captcha: ''
       },

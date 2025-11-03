@@ -16,22 +16,55 @@
         <el-form-item prop="email">
           <el-input
             v-model="forgotForm.email"
-            placeholder="请输入注册邮箱"
+            placeholder="请输入注册邮箱/用户名"
             prefix-icon="el-icon-message"
             clearable
           />
         </el-form-item>
 
-        
-
-        <el-form-item>
-          <el-button
-            type="primary"
-            :loading="loading"
-            @click="submitForgot"
-            class="auth-btn"
-          >发送验证码</el-button>
+        <el-form-item prop="password">
+          <el-input
+            v-model="forgotForm.password"
+            type="password"
+            placeholder="密码 (6~20 位)"
+            prefix-icon="el-icon-lock"
+            show-password
+          />
         </el-form-item>
+
+        <el-form-item prop="confirmPassword">
+          <el-input
+            v-model="forgotForm.confirmPassword"
+            type="password"
+            placeholder="确认密码"
+            prefix-icon="el-icon-lock"
+            show-password
+          />
+        </el-form-item>
+
+        <el-form-item prop="captcha">
+          <div class="captcha-row">
+            <el-input v-model="forgotForm.captcha" placeholder="验证码" />
+            <el-button
+              type="primary"
+              :loading="loading"
+              @click="submitForgot"
+               class="auth-btn"
+            >发送验证码</el-button>
+          </div>
+        </el-form-item>        
+
+        <!--  -->
+
+        <!-- <el-form-item> -->
+          <!-- <el-input v-model="forgotForm.captcha" placeholder="验证码" /> -->
+          <!-- <el-button -->
+            <!-- type="primary" -->
+            <!-- :loading="loading" -->
+            <!-- @click="submitForgot" -->
+            <!-- class="auth-btn" -->
+          <!-- >发送验证码</el-button> -->
+        <!-- </el-form-item> -->
 
         <div class="auth-links">
           <router-link to="/login">返回登录</router-link>
@@ -48,14 +81,37 @@ export default {
   data() {
     return {
       forgotForm: {
-        email: ''
+        username: '',
+        confirmPassword: '',
+        password: '',
+        captcha: ''
       },
       loading: false,
       forgotRules: {
-        email: [
-          { required: true, message: '请输入邮箱', trigger: 'blur' },
-          { type: 'email', message: '请输入正确的邮箱格式', trigger: ['blur','change'] }
-        ]
+        username: [
+          { required: true, message: '请输入用户名或邮箱', trigger: 'blur' },
+          { min: 3, message: '用户名至少 3 个字符', trigger: 'blur' }
+        ],
+        password: [
+          { required: true, message: '请输入密码', trigger: 'blur' },
+          { min: 6, message: '密码长度不少于 6 位', trigger: 'blur' }
+        ],
+        confirmPassword: [
+          { required: true, message: '请确认密码', trigger: 'blur' },
+          {
+            validator: (rule, value, callback) => {
+              if (value !== this.forgotForm.password) {
+                callback(new Error('两次输入密码不一致'))
+              } else {
+                callback()
+              }
+            },
+            trigger: 'blur'
+          }
+        ],
+        captcha: [
+          { required: true, message: '请输入验证码', trigger: 'blur' }
+        ]        
       }
     }
   },
@@ -70,6 +126,8 @@ export default {
         }, 1200)
       })
     }
+
+    // 缺正则判断username是邮箱还是用户名
   }
 }
 </script>
@@ -132,5 +190,13 @@ export default {
 }
 .auth-links a:hover {
   color: #8c88ff;
+}
+
+.captcha-row{
+  width: 100%;
+}
+
+.auth-btn{
+  margin-top:10px;
 }
 </style>

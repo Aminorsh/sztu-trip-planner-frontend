@@ -120,6 +120,8 @@ export default {
     if (this.loginShowCaptcha) {
       this.reloadCaptcha()
     }
+
+    // 缺正则判断username是邮箱还是用户名
   }
 }
 </script>
