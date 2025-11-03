@@ -118,6 +118,7 @@ export default {
   border-radius: 22px;
 }
 
+
 .auth-links {
   display: flex;
   justify-content: space-between;
