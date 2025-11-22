@@ -18,6 +18,16 @@ export default defineConfig({
       resolvers: [ElementPlusResolver()],
     }),
   ],
+  server: {
+    proxy: {
+      // 拦截 /api 路径
+      '/api': {
+        target: import.meta.env.VITE_API_BASE_URL,// 转发到后端地址
+        changeOrigin: true,
+        rewrite: path => path.replace(/^\/api/, '')
+      }
+    }
+  },
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),

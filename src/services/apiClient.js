@@ -1,7 +1,8 @@
+// axios / fetch 的通用封装
 import axios from 'axios'
 
 const apiClient = axios.create({
-  baseURL: '/api',   // 后端 API 前缀
+  baseURL: import.meta.env.VITE_API_BASE_URL,   // 后端 API 前缀
   timeout: 10000
 })
 
