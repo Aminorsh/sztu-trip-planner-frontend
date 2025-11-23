@@ -1,14 +1,22 @@
+// 封装行程模块的常见接口，具体参数 / 返回值需根据后端更新。
 import apiClient from './apiClient'
 
-export default {
-  getTrips() {
-    return apiClient.get('/trips').then(res => res.data)
-  },
-  getTripById(tripId) {
-    return apiClient.get(`/trips/${tripId}`).then(res => res.data)
-  },
-  addTripItem(tripId, data) {
-    return apiClient.post(`/trips/${tripId}/items`, data).then(res => res.data)
-  },
-  // ... 其他行程相关接口
+export function fetchTrips() {
+  return apiClient.get('/trips')
+}
+
+export function fetchTripDetail(tripId) {
+  return apiClient.get(`/trips/${tripId}`)
+}
+
+export function createTrip(tripData) {
+  return apiClient.post('/trips', tripData)
+}
+
+export function updateTrip(tripId, tripData) {
+  return apiClient.put(`/trips/${tripId}`, tripData)
+}
+
+export function deleteTrip(tripId) {
+  return apiClient.delete(`/trips/${tripId}`)
 }

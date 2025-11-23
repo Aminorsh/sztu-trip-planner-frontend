@@ -33,17 +33,17 @@
           />
         </el-form-item>
 
-        <el-form-item prop="captcha" v-if="loginShowCaptcha">
-          <div class="captcha-row">
-            <el-input v-model="loginForm.captcha" placeholder="验证码" />
-            <img
-              :src="captchaImageUrl"
-              alt="验证码"
-              class="captcha-img"
-              @click="reloadCaptcha"
-            />
-          </div>
-        </el-form-item>
+        <!-- <el-form-item prop="captcha" v-if="loginShowCaptcha"> -->
+          <!-- <div class="captcha-row"> -->
+            <!-- <el-input v-model="loginForm.captcha" placeholder="验证码" /> -->
+            <!-- <img -->
+              <!-- :src="captchaImageUrl" -->
+              <!-- alt="验证码" -->
+              <!-- class="captcha-img" -->
+              <!-- @click="reloadCaptcha" -->
+            <!-- /> -->
+          <!-- </div> -->
+        <!-- </el-form-item> -->
 
         <el-form-item>
           <el-button
@@ -54,12 +54,12 @@
           >登录</el-button>
         </el-form-item>
 
-        <div class="social-login">
-          <span>或 使用</span>
-          <el-button icon="el-icon-s-platform" circle @click="onSocial('weibo')" />
-          <el-button icon="el-icon-s-platform" circle @click="onSocial('wechat')" />
-          <el-button icon="el-icon-s-platform" circle @click="onSocial('google')" />
-        </div>
+        <!-- <div class="social-login"> -->
+          <!-- <span>或 使用</span> -->
+          <!-- <el-button icon="el-icon-s-platform" circle @click="onSocial('weibo')" /> -->
+          <!-- <el-button icon="el-icon-s-platform" circle @click="onSocial('wechat')" /> -->
+          <!-- <el-button icon="el-icon-s-platform" circle @click="onSocial('google')" /> -->
+        <!-- </div> -->
 
         <div class="auth-links">
           <router-link to="/forgot-password">忘记密码？</router-link>
@@ -70,61 +70,83 @@
   </div>
 </template>
 
+
 <script>
+import { ref } from 'vue'
+import { ElMessage } from 'element-plus'
+import * as authService from '@/services/authService'  // 引入 authService
+import { useAuth } from '@/composables/useAuth'
 export default {
   name: 'Login',
-  data() {
-    return {
-      loginForm: {
-        username: '',
-        password: '',
-        captcha: ''
-      },
-      loading: false,
-      loginShowCaptcha: false,
-      captchaImageUrl: '',
-      loginRules: {
-        username: [
-          { required: true, message: '请输入用户名或邮箱', trigger: 'blur' }
-        ],
-        password: [
-          { required: true, message: '请输入密码', trigger: 'blur' }
-        ],
-        captcha: [
-          { required: true, message: '请输入验证码', trigger: 'blur' }
-        ]
-      }
-    }
-  },
-  methods: {
-    reloadCaptcha() {
-      this.captchaImageUrl = `/api/captcha?ts=${Date.now()}`
-    },
-    submitLogin() {
-      this.$refs.loginFormRef.validate((valid) => {
-        if (!valid) return
-        this.loading = true
-        // TODO: 后端登录接口
-        setTimeout(() => {
-          this.loading = false
-          this.$router.push({ name: 'Dashboard' })
-        }, 1200)
-      })
-    },
-    onSocial(provider) {
-      console.log('社交登录：', provider)
-      // 可根据 provider 发起第三方登录流程
-    }
-  },
-  mounted() {
-    if (this.loginShowCaptcha) {
-      this.reloadCaptcha()
+  setup() { //setup() 是 Vue3 的 组合式 API 入口函数。
+    const loginFormRef = ref(null) //获取<el-from>组件
+    const { doLogin, isLoggedIn } = useAuth()
+    const loginForm = ref({
+      username: '',
+      password: '',
+      // captcha: ''
+    })
+    const loading = ref(false)//控制登录按钮的“加载中”状态，请求结束再关掉。
+    // const loginShowCaptcha = ref(false)
+    // const captchaImageUrl = ref('')
+
+    const loginRules = { //表单校验规则
+      username: [
+        { required: true, message: '请输入用户名或邮箱', trigger: 'blur' }
+      ],
+      password: [
+        { required: true, message: '请输入密码', trigger: 'blur' }
+      ]
     }
 
-    // 缺正则判断username是邮箱还是用户名
+    async function submitLogin() {
+      // 验证表单
+      await loginFormRef.value.validate().catch(() => { //校验一遍表单
+        return
+      })
+      loading.value = true
+      const resp = await doLogin(loginForm.username, loginForm.password)
+
+      try {
+        // 判断是用户名登录还是邮箱登录？带“@”就走邮箱登录接口
+        // 你的接口文档里有两种 login 接口：/auth/login（用户名）和 /auth/login-email（邮箱）
+        let response
+        const { username, password } = loginForm.value
+        if (username.includes('@')) {
+          response = await authService.loginEmail({ email: username, password })
+        } else {
+          response = await authService.login({ username, password })
+        }
+
+        // 登录成功，后端返回 token
+        const token = response.token
+        localStorage.setItem('token', token)  // 存 token（你也可以存到 store）
+
+        ElMessage.success('登录成功')
+        // 重定向到 Dashboard
+        // 注意：路由名字根据你定义的 router 而定
+        window.location.href = '/dashboard'  // 或者使用 this.$router.push
+      } catch (err) {
+        console.error('登录失败', err)
+        ElMessage.error(err.message || '登录失败')
+      } finally {
+        loading.value = false
+      }
+      return { submitLogin, isLoggedIn}
+    }
+
+    function onSocial(provider) {
+      console.log('社交登录：', provider)
+    }//预留的第三方登录（GitHub、微信等）入口
+
+    return {
+      loginFormRef, loginForm, loginRules,
+      loading,submitLogin, onSocial
+    }//把上面所有变量、函数“打包”扔出去，模板里才能 v-model、@click 直接用到它们
   }
 }
 </script>
+
 
 <style scoped>
 .auth-page {

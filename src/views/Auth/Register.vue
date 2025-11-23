@@ -17,7 +17,7 @@
         <el-form-item prop="username">
           <el-input
             v-model="registerForm.username"
-            placeholder="用户名 "
+            placeholder="用户名"
             prefix-icon="el-icon-user"
             clearable
           />
@@ -52,33 +52,45 @@
           />
         </el-form-item>
 
+        <!-- <el-form-item prop="captcha"> -->
+          <!-- <div class="captcha-row"> -->
+            <!-- <el-input v-model="registerForm.captcha" placeholder="验证码" /> -->
+            <!-- <img -->
+              <!-- :src="captchaImageUrl" -->
+              <!-- alt="验证码" -->
+              <!-- class="captcha-img" -->
+              <!-- @click="reloadCaptcha" -->
+            <!-- /> -->
+          <!-- </div> -->
+        <!-- </el-form-item> -->
+
         <el-form-item prop="captcha">
           <div class="captcha-row">
             <el-input v-model="registerForm.captcha" placeholder="验证码" />
-            <img
-              :src="captchaImageUrl"
-              alt="验证码"
-              class="captcha-img"
-              @click="reloadCaptcha"
-            />
+            <el-button
+              type="primary"
+              :loading="sending"
+              @click="sendCodeToEmail"
+              :disabled="!registerForm.email"
+            >发送验证码</el-button>
           </div>
-        </el-form-item>
+        </el-form-item>        
 
         <el-form-item>
           <el-button
-            type="primary"
-            :loading="loading"
+            type="success"
+            :loading="registering"
             @click="submitRegister"
             class="auth-btn"
           >注册</el-button>
         </el-form-item>
 
-        <div class="social-login">
-          <span>或 使用</span>
-          <el-button icon="el-icon-s-platform" circle @click="onSocial('weibo')" />
-          <el-button icon="el-icon-s-platform" circle @click="onSocial('wechat')" />
-          <el-button icon="el-icon-s-platform" circle @click="onSocial('google')" />
-        </div>
+        <!-- <div class="social-login"> -->
+          <!-- <span>或 使用</span> -->
+          <!-- <el-button icon="el-icon-s-platform" circle @click="onSocial('weibo')" /> -->
+          <!-- <el-button icon="el-icon-s-platform" circle @click="onSocial('wechat')" /> -->
+          <!-- <el-button icon="el-icon-s-platform" circle @click="onSocial('google')" /> -->
+        <!-- </div> -->
 
         <div class="auth-links">
           <router-link to="/login">已有账号？登录</router-link>
@@ -89,71 +101,147 @@
 </template>
 
 <script>
+import { ref } from 'vue'
+import { ElMessage } from 'element-plus'
+import * as authService from '@/services/authService'
+
 export default {
   name: 'Register',
-  data() {
-    return {
-      registerForm: {
-        username: '',
-        password: '',
-        email:'',
-        confirmPassword: '',
-        captcha: ''
-      },
-      loading: false,
-      captchaImageUrl: '',
-      registerRules: {
-        username: [
-          { required: true, message: '请输入用户名或邮箱', trigger: 'blur' },
-          { min: 3, message: '用户名至少 3 个字符', trigger: 'blur' }
-        ],
-        password: [
-          { required: true, message: '请输入密码', trigger: 'blur' },
-          { min: 6, message: '密码长度不少于 6 位', trigger: 'blur' }
-        ],
-        confirmPassword: [
-          { required: true, message: '请确认密码', trigger: 'blur' },
-          {
-            validator: (rule, value, callback) => {
-              if (value !== this.registerForm.password) {
-                callback(new Error('两次输入密码不一致'))
-              } else {
-                callback()
-              }
-            },
-            trigger: 'blur'
-          }
-        ],
-        captcha: [
-          { required: true, message: '请输入验证码', trigger: 'blur' }
-        ]
+  setup() {
+    const registerFormRef = ref(null)
+    const registerForm = ref({
+      username: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      captcha: ''
+    })
+    const loading = ref(false)
+    const captchaImageUrl = ref('') //验证码图片的地址，后面拼时间戳刷新用
+    const sending     = ref(false)   // 发送验证码按钮菊花
+    const registering = ref(false)   // 注册按钮菊花
+
+    const registerRules = {
+      username: [
+        { required: true, message: '请输入用户名', trigger: 'blur' },
+        { min: 3, message: '用户名至少 3 个字符', trigger: 'blur' }
+      ],
+      email: [
+        { required: true, message: '请输入邮箱', trigger: 'blur' },
+        { type: 'email', message: '请输入正确的邮箱', trigger: 'blur' }
+      ],
+      password: [
+        { required: true, message: '请输入密码', trigger: 'blur' },
+        { min: 6, message: '密码长度不少于 6 位', trigger: 'blur' }
+      ],
+      confirmPassword: [
+        { required: true, message: '请确认密码', trigger: 'blur' },
+        {
+          validator: (rule, value, callback) => {
+            if (value !== registerForm.value.password) {
+              callback(new Error('两次输入密码不一致'))
+            } else {
+              callback()
+            }
+          },
+          trigger: 'blur'
+        }
+      ],
+      captcha: [
+        { required: true, message: '请输入验证码', trigger: 'blur' }
+      ]
+    }
+
+    function reloadCaptcha() {
+      captchaImageUrl.value = `/api/captcha?ts=${Date.now()}`
+    }
+
+    // async function submitRegister() {
+      // await registerFormRef.value.validate().catch(() => { return })
+      // loading.value = true
+
+      // try {
+        // const { username, email, password, captcha } = registerForm.value
+        // const resp = await authService.sendCode(email)  
+        // 注意：如果你的后端首先需要 “发送验证码” 再注册，这里可能分两步，或需要调用 send-code API
+        // 但你文档里 “Send Code” 是一个接口是给邮箱发送验证码。
+
+        // 这里调用注册接口
+        // const result = await authService.register({
+          // email,
+          // username,
+          // password,
+          // code: captcha,
+          // display_name: username  // 根据你的接口文档 “display_name” 字段
+        // })
+
+        // 注册成功，后端返回 user + token
+        // const token = result.token
+        // localStorage.setItem('token', token)
+
+        // ElMessage.success('注册成功')
+        // window.location.href = '/dashboard'
+      // } catch (err) {
+        // console.error('注册失败', err)
+        // ElMessage.error(err.message || '注册失败')
+      // } finally {
+        // loading.value = false
+      // }
+    // }
+    // ① 纯粹发验证码
+    async function sendCodeToEmail() {
+      if (!registerForm.value.email) return
+      sending.value = true
+      try {
+        await authService.sendCode(registerForm.value.email)
+        ElMessage.success('验证码已发送，请查收邮箱')
+      } catch (e) {
+        ElMessage.error(e.message || '发送失败')
+      } finally {
+        sending.value = false
       }
     }
-  },
-  methods: {
-    reloadCaptcha() {
-      this.captchaImageUrl = `/api/captcha?ts=${Date.now()}`
-    },
-    submitRegister() {
-      this.$refs.registerFormRef.validate((valid) => {
-        if (!valid) return
-        this.loading = true
-        // TODO: 后端注册接口
-        setTimeout(() => {
-          this.loading = false
-          this.$router.push({ name: 'Dashboard' })
-        }, 1400)
-      })
-    },
-    onSocial(provider) {
+
+    // ② 真正注册
+    async function submitRegister() {
+      await registerFormRef.value.validate().catch(() => false)
+      registering.value = true
+      try {
+        const { email, password, username, captcha } = registerForm.value
+        const res = await authService.register({
+          email,
+          password,
+          code: captcha,              // 关键：把 captcha 改成后端约定的 code
+          display_name: username
+        })
+        localStorage.setItem('token', res.token)
+        ElMessage.success('注册成功')
+        router.push('/dashboard')      // 建议用 vue-router 跳转
+      } catch (e) {
+        ElMessage.error(e.message || '注册失败')
+      } finally {
+        registering.value = false
+      }
+    }
+    function onSocial(provider) {
       console.log('社交注册：', provider)
     }
-  },
-  mounted() {
-    this.reloadCaptcha()
+
+    // 初始化验证码图片
+    reloadCaptcha()
+
+    return {
+      registerFormRef, registerForm, registerRules,
+      sending,registering,sendCodeToEmail,submitRegister,onSocial
+    }
   }
 }
 </script>
+
+<style scoped>
+/* 你现有样式保留 */
+</style>
+
 
 <style scoped>
 .auth-page {
@@ -197,6 +285,8 @@ export default {
 .auth-btn {
   width: 100%;
   border-radius: 22px;
+  border: #8c88ff;
+  background: #b3b3f8;
 }
 .social-login {
   display: flex;

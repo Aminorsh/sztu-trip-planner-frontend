@@ -19,8 +19,13 @@ apiClient.interceptors.request.use(config => {
 
 // 响应拦截器（可用于处理全局错误 /token 失效等）
 apiClient.interceptors.response.use(response => {
-  return response
+  return response.data // 假设后端响应结构为 { data: ... }
 }, error => {
+  if (error.response && error.response.status === 401) {
+    // token 可能过期，清除登录状态
+    localStorage.removeItem('token')
+    // 可跳转到登录页：例如 router.push('/login')
+  }
   // 可做通用错误处理
   return Promise.reject(error)
 })
