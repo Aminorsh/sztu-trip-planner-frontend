@@ -188,7 +188,7 @@ export default {
 .bg-image {
   position: absolute;
   inset: 0;
-  background: url('@/assets/images/hero-travel.jpg') no-repeat center/cover;
+  background: url('../../assets/images/hero-travel.jpg') no-repeat center/cover;
   z-index: 0;
 }
 .bg-overlay {
@@ -203,7 +203,7 @@ export default {
   width: 90%;
   max-width: 380px;
   padding: 32px;
-  background: rgba(255,255,255,0.85) url('@/assets/images/hero-travel4.jpg') no-repeat center/cover;
+  background: rgba(255,255,255,0.85) url('../../assets/images/hero-travel4.jpg') no-repeat center/cover;
   background-size: cover;
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.04);

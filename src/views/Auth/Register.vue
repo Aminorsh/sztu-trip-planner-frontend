@@ -22,6 +22,15 @@
             clearable
           />
         </el-form-item>
+        
+        <el-form-item prop="display_name">
+          <el-input
+            v-model="registerForm.display_name"
+            placeholder="昵称"
+            prefix-icon="el-icon-user"
+            clearable
+          />
+        </el-form-item>
 
         <el-form-item prop="email">
           <el-input
@@ -111,6 +120,7 @@ export default {
     const registerFormRef = ref(null)
     const registerForm = ref({
       username: '',
+      display_name: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -122,6 +132,10 @@ export default {
     const registering = ref(false)   // 注册按钮菊花
 
     const registerRules = {
+      display_name: [
+        { required: true, message: '请输入用户名', trigger: 'blur' },
+        { min: 3, message: '用户名至少 3 个字符', trigger: 'blur' }
+      ],      
       username: [
         { required: true, message: '请输入用户名', trigger: 'blur' },
         { min: 3, message: '用户名至少 3 个字符', trigger: 'blur' }
@@ -207,12 +221,13 @@ export default {
       await registerFormRef.value.validate().catch(() => false)
       registering.value = true
       try {
-        const { email, password, username, captcha } = registerForm.value
+        const { email, password, username, captcha,display_name} = registerForm.value
         const res = await authService.register({
+          username: username,
           email,
           password,
           code: captcha,              // 关键：把 captcha 改成后端约定的 code
-          display_name: username
+          display_name: display_name
         })
         localStorage.setItem('token', res.token)
         ElMessage.success('注册成功')
@@ -256,7 +271,7 @@ export default {
 .bg-image {
   position: absolute;
   inset: 0;
-  background: url('@/assets/images/hero-travel.jpg') no-repeat center/cover;
+  background: url('../../assets/images/hero-travel.jpg') no-repeat center/cover;
   z-index: 0;
 }
 .bg-overlay {
@@ -271,7 +286,7 @@ export default {
   width: 90%;
   max-width: 400px;
   padding: 32px;
-  background: rgba(255,255,255,0.85) url('@/assets/images/hero-travel4.jpg') no-repeat center/cover;
+  background: rgba(255,255,255,0.85) url('../../assets/images/hero-travel4.jpg') no-repeat center/cover;
   background-size: cover;
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.04);

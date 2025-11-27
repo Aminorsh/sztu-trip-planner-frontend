@@ -82,19 +82,30 @@ export function useAuth() {
   const authStore = useAuthStore()
 
   // 登录方法
+
   async function doLogin(username, password) {
-    const resp = await authStore.login({ username, password })
-    return resp
+    try {
+      const resp = await authStore.login({ username, password })
+      return resp
+    } catch (err) {
+      // 把后端返回的 message 直接提示给用户
+      ElMessage.error(err.response?.data?.message || err.message)
+      throw err   // 继续抛，让调用方知道登录失败
+    }
   }
+  // async function doLogin(username, password) {
+  // const resp = await authStore.login({ username, password })
+  // return resp
+  // }
 
   // 注册方法
-  async function doRegister(email, username, password, code, displayName) {
+  async function doRegister(email, username, password, code, display_name) {
     const resp = await authStore.register({
       email,
       username,
       password,
       code,
-      display_name: displayName
+      display_name
     })
     return resp
   }

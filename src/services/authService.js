@@ -7,6 +7,7 @@ export function sendCode(email) {
 }
 
 export function register({ email, password, code, username, display_name }) {
+  console.log('Sending registration data:', { email, password, code, username, display_name }); // 添加这行
   return apiClient.post('/auth/register', {
     email, password, code, username, display_name
   })
