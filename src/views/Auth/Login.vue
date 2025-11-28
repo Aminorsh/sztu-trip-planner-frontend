@@ -118,42 +118,6 @@ export default {
       loading.value = false
         }
     }
-    // async function submitLogin() {
-      // 验证表单
-      // await loginFormRef.value.validate().catch(() => { //校验一遍表单
-        // return
-      // })
-      // loading.value = true
-      // const resp = await doLogin(loginForm.username, loginForm.password)
-
-      // try {
-        // 判断是用户名登录还是邮箱登录？带“@”就走邮箱登录接口
-        // 你的接口文档里有两种 login 接口：/auth/login（用户名）和 /auth/login-email（邮箱）
-        // let response
-        // const { username, password } = loginForm.value
-        // if (username.includes('@')) {
-          // response = await authService.loginEmail({ email: username, password })
-        // } else {
-          // response = await authService.login({ username, password })
-        // }
-
-        // 登录成功，后端返回 token
-        // const token = response.token
-        // localStorage.setItem('token', token)  // 存 token（你也可以存到 store）
-
-        // ElMessage.success('登录成功')
-        // 重定向到 Dashboard
-        // 注意：路由名字根据你定义的 router 而定
-        // window.location.href = '/dashboard'  // 或者使用 this.$router.push
-      // } catch (err) {
-        // console.error('登录失败', err)
-        // ElMessage.error(err.message || '登录失败')
-      // } finally {
-        // loading.value = false
-      // }
-      // return { submitLogin, isLoggedIn}
-    // }
-
     function onSocial(provider) {
       console.log('社交登录：', provider)
     }//预留的第三方登录（GitHub、微信等）入口
