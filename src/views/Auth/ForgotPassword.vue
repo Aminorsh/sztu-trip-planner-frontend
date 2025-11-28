@@ -6,6 +6,23 @@
 
     <div class="auth-container forgot-container">
       <h2 class="auth-title lighter">找回密码</h2>
+
+      <el-form
+        ref="sendCodeFormRef"
+        :model="sendCodeForm"
+        :rules="sendCodeRules"
+        label-position="top"
+      >
+        <el-form-item prop="emailOrUsername">
+          <el-input
+            v-model="sendCodeForm.emailOrUsername"
+            placeholder="请输入注册邮箱"
+            prefix-icon="el-icon-message"
+            clearable
+          />
+        </el-form-item>
+      </el-form>
+
       <el-form
         ref="forgotFormRef"
         :model="forgotForm"
@@ -13,14 +30,14 @@
         label-position="top"
         class="auth-form"
       >
-        <el-form-item prop="emailOrUsername">
-          <el-input
-            v-model="forgotForm.emailOrUsername"
-            placeholder="请输入注册邮箱 或 用户名"
-            prefix-icon="el-icon-message"
-            clearable
-          />
-        </el-form-item>
+        <!-- <el-form-item prop="emailOrUsername"> -->
+          <!-- <el-input -->
+            <!-- v-model="forgotForm.emailOrUsername" -->
+            <!-- placeholder="请输入注册邮箱 或 用户名" -->
+            <!-- prefix-icon="el-icon-message" -->
+            <!-- clearable -->
+          <!-- /> -->
+        <!-- </el-form-item> -->
 
         <el-form-item prop="newPassword">
           <el-input
@@ -81,9 +98,16 @@ export default {
   name: 'ForgotPassword',
   setup() {
     const route=useRouter()
+    const sendCodeFormRef = ref(null)
+    const sendCodeForm = ref({ emailOrUsername: '' })
+    const sendCodeRules = {
+    emailOrUsername: [
+      { required: true, message: '请输入邮箱或用户名', trigger: 'blur' },
+      { min: 3, message: '至少 3 个字符', trigger: 'blur' }
+    ]
+  }
     const forgotFormRef = ref(null)
     const forgotForm = ref({
-      emailOrUsername: '',
       newPassword: '',
       confirmPassword: '',
       code: ''
@@ -92,10 +116,10 @@ export default {
     const codeSending = ref(false)
 
     const forgotRules = {
-      emailOrUsername: [
-        { required: true, message: '请输入邮箱或用户名', trigger: 'blur' },
-        { min: 3, message: '至少 3 个字符', trigger: 'blur' }
-      ],
+      // emailOrUsername: [
+        // { required: true, message: '请输入邮箱或用户名', trigger: 'blur' },
+        // { min: 3, message: '至少 3 个字符', trigger: 'blur' }
+      // ],
       newPassword: [
         { required: true, message: '请输入新密码', trigger: 'blur' },
         { min: 6, message: '密码长度不少于 6 位', trigger: 'blur' }
@@ -119,12 +143,14 @@ export default {
     }
 
     async function sendForgetCode() {
-      const valid = await forgotFormRef.value.validate(['emailOrUsername']).catch(() => false)
+      console.log('[1] 函数入口') 
+      const valid = await sendCodeFormRef.value.validate().catch(() => false)
+      console.log('[2] 校验结果', valid)
       if (!valid) return
       codeSending.value = true
-
+      console.log('[3] 开始发请求')
       try {
-        const val = forgotForm.value.emailOrUsername
+        const val = sendCodeForm.value.emailOrUsername
         // 判断是邮箱还是用户名
         if (val.includes('@')) {
           await authService.sendForgetCode(val)
@@ -135,8 +161,11 @@ export default {
       } catch (err) {
         console.error('发送验证码失败', err)
         ElMessage.error(err.message || '发送验证码失败')
+        console.error(err)
+        console.log('[4] catch 错误', err)
       } finally {
         codeSending.value = false
+        console.log('[5] finally 执行')
       }
     }
 
@@ -145,15 +174,13 @@ export default {
       loading.value = true
 
       try {
-        const { emailOrUsername, newPassword, code } = forgotForm.value
+        const { newPassword,confirmPassword, code } = forgotForm.value
         // 调用后端 “verify-forget-password” 接口
         // 你的接口文档里是用 email 字段，所以需要判断
-        let email = emailOrUsername
-        if (!emailOrUsername.includes('@')) {
-          // 如果是用户名，你需要先换成邮箱，或者后端是否支持 username?
-          // 这里假设只能通过 email 重置密码
-          // 你可能需要后端改接口，或改成发邮件给用户名对应的邮箱
+        if(newPassword!=confirmPassword){
+          console.log("密码不一致")
         }
+        let email = sendCodeForm.value.emailOrUsername
         await authService.verifyForgetPassword({
           email,
           new_password: newPassword,
@@ -170,7 +197,7 @@ export default {
     }
 
     return {
-      forgotFormRef, forgotForm, forgotRules,
+      forgotFormRef, forgotForm, forgotRules,sendCodeRules,sendCodeFormRef,sendCodeForm,
       loading, codeSending,
       sendForgetCode, submitForgot
     }
