@@ -111,12 +111,14 @@
 
 <script>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import * as authService from '@/services/authService'
 
 export default {
   name: 'Register',
   setup() {
+    const router = useRouter()
     const registerFormRef = ref(null)
     const registerForm = ref({
       username: '',
@@ -166,42 +168,6 @@ export default {
       ]
     }
 
-    function reloadCaptcha() {
-      captchaImageUrl.value = `/api/captcha?ts=${Date.now()}`
-    }
-
-    // async function submitRegister() {
-      // await registerFormRef.value.validate().catch(() => { return })
-      // loading.value = true
-
-      // try {
-        // const { username, email, password, captcha } = registerForm.value
-        // const resp = await authService.sendCode(email)  
-        // 注意：如果你的后端首先需要 “发送验证码” 再注册，这里可能分两步，或需要调用 send-code API
-        // 但你文档里 “Send Code” 是一个接口是给邮箱发送验证码。
-
-        // 这里调用注册接口
-        // const result = await authService.register({
-          // email,
-          // username,
-          // password,
-          // code: captcha,
-          // display_name: username  // 根据你的接口文档 “display_name” 字段
-        // })
-
-        // 注册成功，后端返回 user + token
-        // const token = result.token
-        // localStorage.setItem('token', token)
-
-        // ElMessage.success('注册成功')
-        // window.location.href = '/dashboard'
-      // } catch (err) {
-        // console.error('注册失败', err)
-        // ElMessage.error(err.message || '注册失败')
-      // } finally {
-        // loading.value = false
-      // }
-    // }
     // ① 纯粹发验证码
     async function sendCodeToEmail() {
       if (!registerForm.value.email) return
@@ -215,30 +181,6 @@ export default {
         sending.value = false
       }
     }
-
-    // ② 真正注册
-    // async function submitRegister() {
-      // await registerFormRef.value.validate().catch(() => false)
-      // registering.value = true
-      // try {
-        // const { email, password, username, captcha,display_name} = registerForm.value
-        // const res = await authService.register({
-          // username: username,
-          // email,
-          // password,
-          // code: captcha,              // 关键：把 captcha 改成后端约定的 code
-          // display_name: display_name
-        // })
-        // localStorage.setItem('token', res.token)
-        // ElMessage.success('注册成功')
-        // router.push('/dashboard')      // 建议用 vue-router 跳转
-      // } catch (e) {
-        // ElMessage.error(e.message || '注册失败')
-      // } finally {
-        // registering.value = false
-      // }
-    // }
-
     async function submitRegister() {
     // ① 校验拦截
       const valid = await registerFormRef.value.validate().catch(() => false)
@@ -259,7 +201,7 @@ export default {
         localStorage.setItem('token', res.token)
 
         ElMessage.success('注册成功')
-        await router.push('/dashboard')   // ③ 加 await 确保完成再释放 loading
+        router.push('/login')   // ③ 加 await 确保完成再释放 loading
       } catch (e) {
           ElMessage.error(e.response?.data?.message || '注册失败')
         } finally {

@@ -75,10 +75,12 @@
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as authService from '@/services/authService'
+import { useRouter } from 'vue-router'
 
 export default {
   name: 'ForgotPassword',
   setup() {
+    const route=useRouter()
     const forgotFormRef = ref(null)
     const forgotForm = ref({
       emailOrUsername: '',
@@ -117,7 +119,8 @@ export default {
     }
 
     async function sendForgetCode() {
-      await forgotFormRef.value.validate([ 'emailOrUsername' ]).catch(() => { return })
+      const valid = await forgotFormRef.value.validate(['emailOrUsername']).catch(() => false)
+      if (!valid) return
       codeSending.value = true
 
       try {
@@ -157,7 +160,7 @@ export default {
           code
         })
         ElMessage.success('密码重置成功，请登录')
-        window.location.href = '/login'
+        route.push('/login')
       } catch (err) {
         console.error('重置失败', err)
         ElMessage.error(err.message || '重置失败')
