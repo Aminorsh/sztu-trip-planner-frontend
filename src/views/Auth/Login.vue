@@ -73,12 +73,14 @@
 
 <script>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import * as authService from '@/services/authService'  // 引入 authService
 import { useAuth } from '@/composables/useAuth'
 export default {
   name: 'Login',
   setup() { //setup() 是 Vue3 的 组合式 API 入口函数。
+    const router = useRouter()
     const loginFormRef = ref(null) //获取<el-from>组件
     const { doLogin, isLoggedIn } = useAuth()
     const loginForm = ref({
@@ -98,42 +100,59 @@ export default {
         { required: true, message: '请输入密码', trigger: 'blur' }
       ]
     }
-
+      // Login.vue 的 <script> 部分
     async function submitLogin() {
-      // 验证表单
-      await loginFormRef.value.validate().catch(() => { //校验一遍表单
-        return
-      })
-      loading.value = true
-      const resp = await doLogin(loginForm.username, loginForm.password)
+      // 1. 校验
+      const valid = await loginFormRef.value.validate().catch(() => false)
+      if (!valid) return
 
+      // 2. 登录
+      loading.value = true
       try {
+        await doLogin(loginForm.value.username, loginForm.value.password) 
+        ElMessage.success('登录成功')
+        router.push('/')
+        } catch {
+      // 错误提示已在 doLogin 里统一处理
+          } finally {
+      loading.value = false
+        }
+    }
+    // async function submitLogin() {
+      // 验证表单
+      // await loginFormRef.value.validate().catch(() => { //校验一遍表单
+        // return
+      // })
+      // loading.value = true
+      // const resp = await doLogin(loginForm.username, loginForm.password)
+
+      // try {
         // 判断是用户名登录还是邮箱登录？带“@”就走邮箱登录接口
         // 你的接口文档里有两种 login 接口：/auth/login（用户名）和 /auth/login-email（邮箱）
-        let response
-        const { username, password } = loginForm.value
-        if (username.includes('@')) {
-          response = await authService.loginEmail({ email: username, password })
-        } else {
-          response = await authService.login({ username, password })
-        }
+        // let response
+        // const { username, password } = loginForm.value
+        // if (username.includes('@')) {
+          // response = await authService.loginEmail({ email: username, password })
+        // } else {
+          // response = await authService.login({ username, password })
+        // }
 
         // 登录成功，后端返回 token
-        const token = response.token
-        localStorage.setItem('token', token)  // 存 token（你也可以存到 store）
+        // const token = response.token
+        // localStorage.setItem('token', token)  // 存 token（你也可以存到 store）
 
-        ElMessage.success('登录成功')
+        // ElMessage.success('登录成功')
         // 重定向到 Dashboard
         // 注意：路由名字根据你定义的 router 而定
-        window.location.href = '/dashboard'  // 或者使用 this.$router.push
-      } catch (err) {
-        console.error('登录失败', err)
-        ElMessage.error(err.message || '登录失败')
-      } finally {
-        loading.value = false
-      }
-      return { submitLogin, isLoggedIn}
-    }
+        // window.location.href = '/dashboard'  // 或者使用 this.$router.push
+      // } catch (err) {
+        // console.error('登录失败', err)
+        // ElMessage.error(err.message || '登录失败')
+      // } finally {
+        // loading.value = false
+      // }
+      // return { submitLogin, isLoggedIn}
+    // }
 
     function onSocial(provider) {
       console.log('社交登录：', provider)

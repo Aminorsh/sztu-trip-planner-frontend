@@ -14,6 +14,7 @@ export function register({ email, password, code, username, display_name }) {
 }
 
 export function login({ username, password }) {
+  console.log('Sending login data:', { username, password });
   return apiClient.post('/auth/login', {
     username, password
   })

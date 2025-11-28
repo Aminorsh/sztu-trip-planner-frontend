@@ -217,26 +217,54 @@ export default {
     }
 
     // ② 真正注册
+    // async function submitRegister() {
+      // await registerFormRef.value.validate().catch(() => false)
+      // registering.value = true
+      // try {
+        // const { email, password, username, captcha,display_name} = registerForm.value
+        // const res = await authService.register({
+          // username: username,
+          // email,
+          // password,
+          // code: captcha,              // 关键：把 captcha 改成后端约定的 code
+          // display_name: display_name
+        // })
+        // localStorage.setItem('token', res.token)
+        // ElMessage.success('注册成功')
+        // router.push('/dashboard')      // 建议用 vue-router 跳转
+      // } catch (e) {
+        // ElMessage.error(e.message || '注册失败')
+      // } finally {
+        // registering.value = false
+      // }
+    // }
+
     async function submitRegister() {
-      await registerFormRef.value.validate().catch(() => false)
+    // ① 校验拦截
+      const valid = await registerFormRef.value.validate().catch(() => false)
+      if (!valid) return
+
       registering.value = true
       try {
-        const { email, password, username, captcha,display_name} = registerForm.value
+        const { email, password, username, captcha, display_name } = registerForm.value
         const res = await authService.register({
-          username: username,
-          email,
-          password,
-          code: captcha,              // 关键：把 captcha 改成后端约定的 code
-          display_name: display_name
+        username,
+        email,
+        password,
+        code: captcha,          // 与后端约定字段保持一致
+        display_name
         })
+
+        // ② 后端如果只给 201 不返 token，就删掉下面这行
         localStorage.setItem('token', res.token)
+
         ElMessage.success('注册成功')
-        router.push('/dashboard')      // 建议用 vue-router 跳转
+        await router.push('/dashboard')   // ③ 加 await 确保完成再释放 loading
       } catch (e) {
-        ElMessage.error(e.message || '注册失败')
-      } finally {
-        registering.value = false
-      }
+          ElMessage.error(e.response?.data?.message || '注册失败')
+        } finally {
+          registering.value = false
+        }
     }
     function onSocial(provider) {
       console.log('社交注册：', provider)
