@@ -5,11 +5,11 @@
     <header class="header">
       <div class="container header-inner">
         <div class="logo">TravelPlanner</div>
-        <nav class="nav-menu">
-          <el-button type="text" class="nav-btn">特色</el-button>
-          <el-button type="text" class="nav-btn">范例行程</el-button>
-          <el-button type="text" class="nav-btn">关于我们</el-button>
-        </nav>
+        <!-- <nav class="nav-menu"> -->
+          <!-- <el-button type="text" class="nav-btn">特色</el-button> -->
+          <!-- <el-button type="text" class="nav-btn">范例行程</el-button> -->
+          <!-- <el-button type="text" class="nav-btn">关于我们</el-button> -->
+        <!-- </nav> -->
         <div class="auth-buttons">
           <el-button class="btn-small btn-soft" @click="onLogin">登录</el-button>
           <el-button class="btn-small btn-soft" @click="onRegister">注册</el-button>
@@ -43,15 +43,16 @@
       <div class="container">
         <h2 class="section-title">主要功能</h2>
         <div class="features-grid">
-          <div class="feature" v-for="feature in features" :key="feature.id">
-            <div class="feature-icon-wrapper">
-              <div class="feature-icon-circle"></div>
-              <img class="feature-icon" :src="feature.icon" :alt="feature.title" />
+          <div class="feature" v-for="feature in features" :key="feature.id" :style="{ backgroundImage: `url(${feature.icon})` }">
+            <!-- <img class="feature-icon" :src="feature.icon" :alt="feature.title" />   -->
+            <!-- <div class="feature-icon-wrapper"> -->
+            <!-- </div> -->
+            <div class="feature-mask"></div>
+              <h3 class="feature-title">{{ feature.title }}</h3>
+              <p class="feature-desc">{{ feature.description }}</p>
             </div>
-            <h3 class="feature-title">{{ feature.title }}</h3>
-            <p class="feature-desc">{{ feature.description }}</p>
           </div>
-        </div>
+        
       </div>
     </section>
 
@@ -60,11 +61,11 @@
       <div class="container">
         <h2 class="section-title">热门行程示例</h2>
         <div class="cards-grid">
-          <div class="card" v-for="trip in exampleTrips" :key="trip.id" @click="onViewTrip(trip.id)">
-            <div class="card-image-wrapper">
-              <div class="card-circle-decor"></div>
-              <img class="card-image" :src="trip.coverImage" :alt="trip.title" />
-            </div>
+          <div class="card" v-for="trip in exampleTrips" :key="trip.id" @click="onViewTrip(trip.id)" :style="{ backgroundImage: `url(${trip.coverImage})` }">
+            <!-- <div class="card-image-wrapper"> -->
+              <!-- <div class="card-circle-decor"></div> -->
+              <!-- <img class="card-image" :src="trip.coverImage" :alt="trip.title" /> -->
+            <!-- </div> -->
             <div class="card-body">
               <h4 class="card-title">{{ trip.title }}</h4>
               <p class="card-meta">{{ trip.days }} 天 · {{ trip.stops }} 站</p>
@@ -79,11 +80,15 @@
       <div class="container">
         <h2 class="section-title">用户心声</h2>
         <div class="testimonial-grid">
-          <div class="testimonial" v-for="item in testimonials" :key="item.id">
+          <div class="testimonial" v-for="item in testimonials" :key="item.id" >
             <div class="testimonial-avatar-wrapper">
-              <div class="avatar-circle"></div>
+          <!-- 头像 -->
               <img class="testimonial-avatar" :src="item.avatar" :alt="item.name" />
             </div>
+            <!-- <div class="testimonial-avatar-wrapper"> -->
+              <!-- <div class="avatar-circle"></div> -->
+              <!-- <img class="testimonial-avatar" :src="item.avatar" :alt="item.name" /> -->
+            <!-- </div> -->
             <p class="testimonial-text">“{{ item.text }}”</p>
             <span class="testimonial-name">{{ item.name }}</span>
           </div>
@@ -120,18 +125,22 @@ import { ElButton, ElIcon } from 'element-plus'
 import { ChatDotRound, PictureRounded, Promotion } from '@element-plus/icons-vue'
 
 // 图片资源导入（ESM 风格）
-import img1 from '@/assets/images/hero-travel.jpg'
-import img2 from '@/assets/images/hero-travel2.jpg'
-import img3 from '@/assets/images/hero-travel3.jpg'
-import iconDrag from '@/assets/images/icon-drag.png'
-import iconMap from '@/assets/images/icon-map.png'
-import iconShare from '@/assets/images/icon-share.png'
-import avatar1 from '@/assets/images/avatar1.jpg'
-import avatar2 from '@/assets/images/avatar2.jpg'
-import avatar3 from '@/assets/images/avatar3.jpg'
-import trip1img from '@/assets/images/trip1.jpg'
-import trip2img from '@/assets/images/trip2.jpg'
-import trip3img from '@/assets/images/trip3.jpg'
+import img1 from '@/assets/images/11.jpg'
+import img2 from '@/assets/images/12.jpg'
+import img3 from '@/assets/images/13.jpg'
+// import img4 from '@/assets/images/14.jpg'
+import iconDrag from '/src/assets/images/1.jpg'
+import iconMap from '/src/assets/images/2.jpg'
+import iconShare from '/src/assets/images/3.jpg'
+import iconSharei from '/src/assets/images/4.jpg'
+import avatar1 from '/src/assets/images/8.jpg'
+import avatar2 from '/src/assets/images/9.jpg'
+import avatar3 from '/src/assets/images/10.jpg'
+import trip1img from '/src/assets/images/5.jpg'
+import trip2img from '/src/assets/images/6.jpg'
+import trip3img from '/src/assets/images/7.jpg'
+
+
 
 export default {
   name: 'Home',
@@ -142,12 +151,14 @@ export default {
   data() {
     return {
       heroImages: [img1, img2, img3],
+      iconDrag,iconMap,iconShare,trip1img,trip2img,trip3img,
+      avatar1,avatar2,avatar3,
       activeSlide: 0,
       features: [
         { id: 1, icon: iconDrag, title: '拖拽规划', description: '将景点拖入日程，自由排序构建专属行程' },
         { id: 2, icon: iconMap, title: '地图可视化', description: '在地图上查看路线、足迹、距离与时间' },
         { id: 3, icon: iconShare, title: '协作分享', description: '邀请朋友一起编辑行程,实时同步更新' },
-        { id: 4, icon: iconShare, title: '路线优化', description: 'AI智能规划路线,自动调整景点顺序' }
+        { id: 4, icon: iconSharei, title: '路线优化', description: 'AI智能规划路线,自动调整景点顺序' }
       ],
       
       exampleTrips: [
@@ -346,16 +357,28 @@ export default {
   width: 80px;
   height: 80px;
 }
-.feature-icon-circle {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80px;
-  height: 80px;
-  background: radial-gradient(circle at center, #8c88ff, #ff6f6f);
-  border-radius: 50%;
-  opacity: 0.2;
+/* .feature-icon-circle { */
+  /* position: absolute; */
+  /* top: 0; */
+  /* left: 50%; */
+  /* transform: translateX(-50%); */
+  /* width: 80px; */
+  /* height: 80px; */
+  /* background: radial-gradient(circle at center, #8c88ff, #ff6f6f); */
+  /* border-radius: 50%; */
+  /* opacity: 0.2; */
+/* } */
+
+.feature {
+  position: relative;
+  height: 260px;                 /* 想多高就设多高 */
+  border-radius: 14px;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .08);
+  cursor: pointer;
+  transition: transform .25s;
 }
 .feature-icon {
   position: relative;
@@ -367,11 +390,11 @@ export default {
   font-size: 1.3rem;
   font-weight: 600;
   margin-bottom: 10px;
-  color: #8c88ff;
+  color: #fbfbfb;
 }
 .feature-desc {
   font-size: 1rem;
-  color: #777;
+  color: #f6f1f1;
   line-height: 1.5;
 }
 
@@ -379,6 +402,21 @@ export default {
 .examples {
   padding: 80px 0;
   background-color: #ffffff;
+  position: relative;
+  height: 260px;                 /* 想多高就设多高 */
+  border-radius: 14px;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .08);
+  cursor: pointer;
+  transition: transform .25s;
+}
+
+.card {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 .section-title {
   text-align: center;
@@ -431,13 +469,30 @@ export default {
 }
 .card-meta {
   font-size: 0.9rem;
-  color: #777;
+  color: #f1f1f1;
 }
 
 /* 用户评价区 */
 .testimonials {
   padding: 80px 0;
   background-color: #ffffff;
+  position: relative;
+  /* height: 260px;                 想多高就设多高 */
+  border-radius: 14px;
+  overflow: hidden;
+  /* background-size: cover; */
+  /* background-position: center; */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .08);
+  cursor: pointer;
+  transition: transform .25s;
+
+}
+
+.testimonial-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;   /* 关键：不变形 + 填满圆框 */
 }
 .testimonial-grid {
   display: grid;
@@ -521,5 +576,9 @@ export default {
 .footer-copyright {
   font-size: 0.85rem;
   color: #999;
+}
+
+.hero-title{
+  color:#fbfbfb
 }
 </style>

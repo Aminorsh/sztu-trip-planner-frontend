@@ -26,6 +26,7 @@ const routes = [
   { path: '/export/:tripId', name: 'ExportPanel', component: ExportPanel, props: true },
   { path: '/notifications', name: 'Notifications', component: Notifications },
   { path: '/profile', name: 'Profile', component: Profile },
+  { path: '/share/:shareId', name: 'ShareTrip', component: () => import('@/views/ShareTrip.vue') }
 ]
 
 const router = createRouter({
