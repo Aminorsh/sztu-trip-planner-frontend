@@ -576,7 +576,7 @@ export default {
 }
 .testimonial-text {
   font-size: 1.3rem;
-  color: #b89090;
+  color: #0f0404;
   margin-bottom: 16px;
 }
 .testimonial-name {

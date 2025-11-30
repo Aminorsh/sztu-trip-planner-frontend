@@ -15,7 +15,7 @@
           <el-button size="mini" @click="saveTrip">保存</el-button>
           <el-button size="mini" @click="shareTrip">分享</el-button>
           <el-button size="mini" @click="exportVisible = true">导出</el-button>
-          <el-button size="mini" @click="openSettings">设置</el-button>
+          <!-- <el-button size="mini" @click="openSettings">设置</el-button> -->
           <el-button size="mini" @click="showPlaceSearch = true">添加地点</el-button>
         </div>
       </header>
@@ -32,6 +32,14 @@
             >
               第 {{ idx + 1 }} 天
             </el-button>
+            <!-- 删除该天 -->
+            <el-button
+              type="text"
+              icon="Delete"
+              size="small"
+              class="del-day-btn"
+              @click="onDeleteDay(idx)"
+            />
           </div>
           <div class="items-list">
             <draggable v-model="dayItems" handle=".drag-handle" item-key="id">
@@ -49,9 +57,27 @@
                 </div>
               </template>
             </draggable>
-            <el-button type="text" class="add-item-btn" @click="addNewItem">
-              + 添加行程项
-            </el-button>
+            <!-- <el-button type="text" class="add-item-btn" @click="addNewItem"> -->
+              <!-- + 添加行程项 -->
+            <!-- </el-button> -->
+            <!--  day-items 列表下方  -->
+            <div class="bottom-actions">
+              <el-button
+                type="text"
+                class="add-day-btn"
+                @click="addNewDay"
+              >
+              + 添加新的一天
+              </el-button>
+
+              <el-button
+                type="text"
+                class="add-item-btn"
+                @click="addNewItem"
+                >
+                + 添加行程项
+              </el-button>
+            </div>
           </div>
           <!-- 日历视图 -->
           <div class="calendar-view">
@@ -91,7 +117,7 @@
           
           <div v-if="selectedItem">
             
-            <h3>编辑项：{{ selectedItem.name }}</h3>
+            <h3 class="right-title">编辑项：{{ selectedItem.name }}</h3>
             <el-form :model="selectedItem" label-position="top">
               
               <el-form-item label="名称">
@@ -156,7 +182,7 @@
 import draggable from 'vuedraggable'
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
-import heroTravel from '@/assets/images/17.jpg'
+import heroTravel from '@/assets/images/27.jpg'
 import heroTravel5 from '@/assets/images/19.jpg'
 import PlaceSearch from './PlaceSearch.vue'
 import ExportPanel from './ExportPanel.vue'
@@ -178,7 +204,7 @@ export default {
         status: '进行中'
       },
       tripDays: 5,
-      currentDay: 1,
+      currentDay: 2,
       dayItems: [
         { id: 'i1', name: '浅草寺', time: '09:00', note: '建议早点去避开人潮', priority: '中' },
         { id: 'i2', name: '秋叶原漫步', time: '12:00', note: '电子产品 & 动漫', priority: '中' },
@@ -237,6 +263,44 @@ export default {
     addNewItem() {
       const newId = `item${Date.now()}`
       this.dayItems.push({ id: newId, name: '', time: '', note: '', priority: '低' })
+    },
+    addNewDay() {
+      // 1. 天数 +1
+      this.tripDays += 1
+
+      // 2. 自动切换到最后一天（可选）
+      this.currentDay = this.tripDays
+
+      // 3. 为新的一天准备空数组（若 dayItems 是按天分的对象/数组）
+      //    这里假设你只有一份 dayItems，想新建可再 push 空数组
+      //    如果 dayItems 已经是“按天”结构，请按你数据结构 push
+      // 示例：dayItems 空数组，用户后续再添加具体项
+      // this.dayItems.push([])   // 若 dayItems 是二维数组
+
+      // 4. 可选：滚动到底部
+      this.$nextTick(() => {
+      const list = this.$el.querySelector('.items-list')
+      if (list) list.scrollTop = list.scrollHeight
+      })
+    },
+    onDeleteDay(index) {
+      // 至少留 1 天
+      if (this.tripDays <= 1) return
+
+      this.$confirm(`确定删除第 ${index + 1} 天？`, '提示', {
+        confirmButtonText: '删',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.tripDays -= 1
+        // 如果当前正在删除这一天，就切到前一天
+        if (this.currentDay === index + 1) {
+          this.currentDay = Math.max(1, index)
+        } else if (this.currentDay > index + 1) {
+        // 删除的是前面的天，当前 day 序号-1
+          this.currentDay -= 1
+        }
+       }).catch(() => {})
     },
     selectItem(item) {
       this.selectedItem = item
@@ -338,8 +402,8 @@ export default {
 
 .trip-status{
   text-align: center;
-  background: #e6e2ebb3;
-  color:#5F5F97;
+  background: #111769dc;
+  color:#2b2b77;
   border: 2px solid e6e2ebb3;
 }
 
@@ -362,7 +426,7 @@ export default {
   position: absolute;
   inset: 0;
   /* 页面背景颜色 */
-  background: rgba(9, 9, 9, 0.045);
+  background: rgba(92, 82, 82, 0.045);
   z-index: 1;
 }
 .trip-inner {
@@ -384,20 +448,31 @@ export default {
   gap: 12px;
 }
 .trip-title {
-  font-size: 1.8rem;
+  font-family: 'Hou';
+  font-weight: 1;
+  font-size: 2.0rem;
   margin: 0;
-  color: #0b2edb65;
+  color: #ffffff;
 }
 .trip-status {
-  padding: 4px 10px;
-  background: rgba(183, 182, 221, 0.942);
+  font-family: 'Mantou';
+  padding: 4px 12px;
+  font-weight: 1000;
+  background: rgba(252, 252, 252, 0.942);
+  border-color:  rgba(246, 246, 246, 0.942);
+  color: rgba(116, 182, 208, 0.942);
   border-radius: 8px;
-  font-size: 0.9rem;
-  color: #a61f4c86;
+  font-size: 1.4rem;
+  
 }
 .header-right .el-button {
+  font-family: Mantou;
+  font-size: 1.2rem;
+  font-weight: 1000;
   margin-left: 8px;
-  color: #9898ed;
+  background: rgba(255, 255, 255, 0.942);
+  border-color:  rgba(255, 255, 255, 0.942);
+  color: rgba(116, 182, 208, 0.942);
 }
 
 /* 主体布局 */
@@ -407,23 +482,39 @@ export default {
   overflow: hidden;
 }
 
+.day-switcher .el-button {
+  height: 32px;                  /* 1. 统一高度 */
+  line-height: 32px;             /* 2. 让文字垂直居中 */
+  padding: 0 12px;               /* 3. 统一横向内间距 */
+  border: none !important;       /* 4. 去掉边框差异 */
+  margin: 0;                     /* 5. 去掉默认 margin */
+  vertical-align: middle;        /* 6. 行内元素中线对齐 */
+}
 .el-button--text{
-  --el-button-hover-text-color:#5F5F97;
-  border: #e9e9f0;
+  font-family: 'Mantou';
+  font-weight: 500;
+  font-size:1.0rem;
+  background: #ffffffeb;
+  --el-button-hover-text-color:#191962;
+  border: #f9f9f9;
 }
 .el-button--primary{
-  border: #e9e9f0;
-  --el-button-hover-text-color:#5F5F97;
+  font-family: 'Mantou';
+  font-size:1.0rem;
+  background: #8ed6f5;
+  font-weight: 500;
+  border: #f8f8f8;
+  --el-button-hover-text-color:#1a1a57;
 }
 .el-button{
   text-align: center;
-  background: #e6e2ebb3;
-  color:#5F5F97;
+  
+  color:#12125d;
   border: 2px solid e6e2ebb3;
 }
 .el-button:hover {
   background: #fcf9fd9b;
-  color:#9898ed
+  color:#0a0a5b
 }
 .left-side {
   width: 280px;
@@ -433,6 +524,7 @@ export default {
   border-radius: 20px;
 }
 .day-switcher {
+  
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -447,17 +539,19 @@ export default {
   display: flex;
   align-items: center;
   padding: 8px;
-  background: #e6e2ebb3;
+  background: #ffffff;
+  color: #0a0a42;
+  font-weight: 500;
   border-radius: 8px;
   margin-bottom: 8px;
   cursor: pointer;
   transition: background-color 0.2s;
 }
 .item-card:hover {
-  background: #9b61aa9b;
+  background: #f4f6ba;
 }
 .item-card.selected {
-  border: 2px solid #ae9fb4;
+  border: 2px solid #ffffff;
 }
 .drag-handle {
   cursor: grab;
@@ -468,16 +562,39 @@ export default {
 .item-content {
   flex: 1;
 }
+
+.bottom-actions {
+  display: flex;               /* 同一行 */
+  align-items: center;         /* 垂直中线对齐 */
+  gap: 12px;                   /* 按钮间距 */
+  margin-top: 12px;
+}
+
 .add-item-btn {
   padding: 8px;
-  
+  font-family: 'Mantou';
+  font-weight: 500;
   /* padding-right: 8px; */
   font-size: 0.9rem;
   text-align: center;
   margin-top: 12px;
-  color: #5F5F97;
+  color: #0a0a52;
   display: block;
 }
+
+.add-day-btn {
+  padding: 8px;
+  font-family: 'Mantou';
+  font-weight: 500;
+  /* padding-right: 8px; */
+  font-size: 0.9rem;
+  text-align: center;
+  margin-top: 12px;
+  color: #0a0a52;
+  display: block;
+}
+
+
 .calendar-view {
   margin-top: 24px;
   min-height: 300px;
@@ -593,7 +710,7 @@ export default {
   color: #d7cfcf;
 }
 
-/* 底部状态栏 */
+
 .trip-footer {
   padding: 12px 16px;
   border-top: 1px solid rgba(247, 245, 247, 0.3);
@@ -607,6 +724,40 @@ export default {
   color: #200707;
 }
 .trip-footer .el-button {
-  color: #74738a;
+  color: #1e1a68;
 }
+
+.right-title{
+  font-family: Hou;
+  font-weight: 1;
+  color: #000000;
+  font-size: 1.6rem;
+}
+.el-button--small:hover {
+  background: #a3b5d9;
+}
+.el-button--danger {
+  background: #fff;
+}
+
+.el-button--danger:hover{
+  background: #d44949;
+}
+
+.el-button--success:hover{
+  background: #8ed0ee;
+}
+
+.el-button--success {
+  background: #fff; 
+}
+
+.el-form-item--label-top{
+  color: #000003;
+}
+
+
+
+
+
 </style>

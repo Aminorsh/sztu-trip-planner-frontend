@@ -188,7 +188,38 @@ export default {
 </script>
 
 <style scoped>
+@font-face {
+  font-family: 'Mantou';
+  src: url('/src/assets/font/love.ttf') format('truetype');
+
+  font-style: normal;
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'Hou';
+  src:url('/src/assets/font/1.ttf') format('truetype');
+
+  font-style: normal;
+  font-weight: 400;
+}
+
+
+.mantou {
+  font-family: 'Mantou', sans-serif;
+  letter-spacing: 0.02em;
+  font-size: 1.1rem;
+  font-weight: 400;
+}
+
+.Hou {
+  font-family: 'Hou', sans-serif;
+  letter-spacing: 0.05em;
+  font-size: 2.1rem;
+  font-weight: 1;
+}
 .export-overlay {
+  font-family: 'Mantou';
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.4);
@@ -215,7 +246,7 @@ export default {
 .panel-header h3 {
   margin: 0;
   font-size: 1.4rem;
-  color: #8c88ff;
+  color: #342dae;
 }
 .btn-close {
   font-size: 1.4rem;
@@ -232,7 +263,7 @@ export default {
 }
 .option-section h4 {
   font-size: 1.1rem;
-  color: #8c88ff;
+  color: #342dae;
   margin-bottom: 8px;
 }
 .preview-section {

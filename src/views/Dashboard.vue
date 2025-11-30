@@ -1,6 +1,95 @@
 <!-- src/views/Dashboard.vue -->
 <template>
   <div class="dashboard-page">
+    <!-- 新建行程弹窗 -->
+    <el-dialog v-model="createVisible" title="新建行程" width="400px" @close="resetNewForm">
+      <el-form :model="newTripForm" label-width="80px">
+        <el-form-item label="标题" required>
+          <el-input v-model="newTripForm.title" placeholder="例如：东京 5 日游"/>
+        </el-form-item>
+        <el-form-item label="开始日期" required>
+          <el-date-picker
+            v-model="newTripForm.startDate"
+            type="date"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+            @change="calcDays"
+          />
+        </el-form-item>
+        <el-form-item label="结束日期" required>
+          <el-date-picker
+            v-model="newTripForm.endDate"
+            type="date"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+            @change="calcDays"
+          />
+        </el-form-item>
+        <el-form-item label="天数">
+          <el-input-number
+            v-model="newTripForm.days"
+            :min="1"
+            :max="99"
+            :step="1"
+            controls-position="right"
+            disabled
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="resetNewForm">取消</el-button>
+        <el-button type="primary" @click="onCreate">创建</el-button>
+      </template>
+    </el-dialog>
+    <!-- 编辑弹窗 -->
+    <el-dialog
+      v-model="editVisible"
+      title="编辑行程"
+      width="420px"
+      @close="resetEdit"
+    >
+      <el-form :model="editForm" label-width="80px">
+        <el-form-item label="标题">
+          <el-input v-model="editForm.title" placeholder="请输入标题" />
+      </el-form-item>
+
+      <el-form-item label="开始日期">
+        <el-date-picker
+          v-model="editForm.startDate"
+          type="date"
+          format="YYYY-MM-DD"
+          value-format="YYYY-MM-DD"
+          @change="calcDays"
+        />
+      </el-form-item>
+
+      <el-form-item label="结束日期">
+        <el-date-picker
+          v-model="editForm.endDate"
+          type="date"
+          format="YYYY-MM-DD"
+          value-format="YYYY-MM-DD"
+          @change="calcDays"
+        />
+      </el-form-item>
+
+      <el-form-item label="天数">
+        <el-input-number
+          v-model="editForm.days"
+          :min="1"
+         :max="99"
+         :step="1"
+         controls-position="right"
+         disabled
+       />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="resetEdit">取消</el-button>
+        <el-button type="primary" @click="saveEdit">保存</el-button>
+      </template>
+    </el-dialog>
     <!-- 背景图层 + 遮罩层 -->
     <div
       class="bg-image"
@@ -74,7 +163,7 @@
                   <el-icon><Delete /></el-icon>删除
                 </el-button>
                 <el-button size="mini" @click="shareTrip(trip.id)">
-                  <el-icon><Share /></el-icon>分享
+                  <el-icon><Share /></el-icon>邀请
                 </el-button>
               </div>
             </div>
@@ -121,10 +210,26 @@ import {
 export default {
   name: 'Dashboard',
   components: { View, Edit, Delete, Share, House, CirclePlus, Search },
+  
   data() {
     return {
       heroTravel,
       img1,img2,img3,img4,img5,img6,img7,img8,img9,
+      editVisible: false,  
+      newTripForm: {      // 新建表单
+      title: '',
+      startDate: '',
+      endDate: '',
+      days: 1
+      },
+      createVisible: false,        // 弹窗开关
+      editForm: {                  // 临时表单
+      id: '',
+      title: '',
+      startDate: '',
+      endDate: '',
+      days: 0
+    },
       user: {
         name: '张三',
         nickname: '旅行者',
@@ -204,6 +309,71 @@ export default {
     },
     onSearch() {
       console.log('搜索关键字:', this.searchKey)
+    },
+    editTrip(id) {
+      const t = this.trips.find(v => v.id === id)
+      if (!t) return
+      this.editForm = { ...t }   // 深拷贝一份
+     this.editVisible = true
+    },
+
+    calcDays() {
+      if (!this.editForm.startDate || !this.editForm.endDate) return
+      const start = new Date(this.editForm.startDate)
+      const end   = new Date(this.editForm.endDate)
+      const days  = Math.ceil((end - start) / 86400000) + 1
+      this.editForm.days = days > 0 ? days : 1
+    },
+
+    saveEdit() {
+      const idx = this.trips.findIndex(v => v.id === this.editForm.id)
+      if (idx > -1) {
+        // 回写数据
+        this.trips.splice(idx, 1, { ...this.editForm })
+        this.$message.success('已保存')
+      }
+      this.resetEdit()
+    },
+
+    resetEdit() {
+      this.editVisible = false
+      this.editForm = { id: '', title: '', startDate: '', endDate: '', days: 0 }
+    },
+    createNew() {
+  this.createVisible = true   // 打开弹窗
+},
+    calcDays() {
+      if (!this.newTripForm.startDate || !this.newTripForm.endDate) return
+      const start = new Date(this.newTripForm.startDate)
+      const end   = new Date(this.newTripForm.endDate)
+      const days  = Math.ceil((end - start) / 86400000) + 1
+      this.newTripForm.days = days > 0 ? days : 1
+    },
+    onCreate() {
+      if (!this.newTripForm.title || !this.newTripForm.startDate || !this.newTripForm.endDate) {
+        this.$message.warning('请填写完整')
+        return
+      }
+      // 随机封面图（6 张里轮播）
+      const covers = [this.img1, this.img2, this.img3, this.img4, this.img5, this.img6]
+      const newTrip = {
+        id: 't' + Date.now(),                                      // 随机 id
+        coverImage: covers[Math.floor(Math.random() * covers.length)],
+        title: this.newTripForm.title,
+        startDate: this.newTripForm.startDate,
+        endDate: this.newTripForm.endDate,
+        days: this.newTripForm.days
+      }
+      // 追加到列表最前面
+      this.trips.unshift(newTrip)
+      this.$message.success('创建成功')
+      this.resetNewForm()
+      // 立即进入详情页（或改为 EditTrip）
+      this.$router.push({ name: 'TripDetail', params: { id: newTrip.id } })
+    },
+    resetNewForm() {
+      this.createVisible = false
+      this.newTripForm = { title: '', startDate: '', endDate: '', days: 1 }
     }
   }
 }
@@ -248,7 +418,7 @@ export default {
   width: 100%;
   min-height: 100vh;
   color: #f3f4f6;
-  background: #f8f8fb;
+  background:rgba(92, 76, 76, 0.045);
 }
 .bg-image {
   position: absolute;

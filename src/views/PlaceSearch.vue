@@ -44,7 +44,7 @@
                     <el-button size="mini" type="primary" :disabled="place.added" @click="addPlace(place)">
                       {{ place.added ? '已添加' : '加入行程' }}
                     </el-button>
-                    <el-button size="mini" @click="viewDetails(place)">
+                    <el-button class="detail" size="mini" @click="viewDetails(place)">
                       详情
                     </el-button>
                   </div>
@@ -60,7 +60,7 @@
             </div>
           </div>
           <div class="modal-footer">
-            <el-button @click="onCancel">关闭</el-button>
+            <el-button class="close" @click="onCancel">关闭</el-button>
           </div>
         </div>
       </div>
@@ -143,7 +143,40 @@ export default {
 </script>
 
 <style scoped>
+
+@font-face {
+  font-family: 'Mantou';
+  src: url('/src/assets/font/love.ttf') format('truetype');
+
+  font-style: normal;
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'Hou';
+  src:url('/src/assets/font/1.ttf') format('truetype');
+
+  font-style: normal;
+  font-weight: 400;
+}
+
+
+.mantou {
+  font-family: 'Mantou', sans-serif;
+  letter-spacing: 0.02em;
+  font-size: 1.1rem;
+  font-weight: 400;
+}
+
+.Hou {
+  font-family: 'Hou', sans-serif;
+  letter-spacing: 0.05em;
+  font-size: 2.1rem;
+  font-weight: 1;
+}
 .modal-overlay {
+  font-family: Mantou;
+  
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.4);
@@ -153,6 +186,8 @@ export default {
   z-index: 10000;
 }
 .modal-container {
+  font-family: Mantou;
+  
   width: 760px;
   max-height: 90vh;
   background: #fff;
@@ -162,6 +197,8 @@ export default {
   flex-direction: column;
 }
 .modal-header {
+  font-family: Mantou;
+
   display: flex;
   justify-content: center;
   align-items: center;
@@ -169,11 +206,15 @@ export default {
   background: #f8f8fb;
 }
 .modal-title {
-  font-size: 1.4rem;
+  font-family: Mantou;
+  
+  font-size: 1.8rem;
   font-weight: 600;
-  color: #8c88ff;
+  color: #131068;
 }
 .modal-close-btn {
+  font-family: Mantou;
+
   position: absolute;
   right: 16px;
   top: 16px;
@@ -200,7 +241,8 @@ export default {
   padding: 0 16px 16px;
 }
 .results-list {
-  padding-top: 8px;
+  padding-top: 15px;
+  
 }
 .place-card {
   display: flex;
@@ -251,9 +293,17 @@ export default {
   margin: 64px 0;
 }
 .modal-footer {
+  
   padding: 12px 16px;
   text-align: right;
   background: #fafafa;
+}
+
+.close{
+  font-family: Mantou;
+  color:#131068;
+  font-weight: 500;
+  font-size:1.1rem;
 }
 .modal-fade-enter-active, .modal-fade-leave-active {
   transition: all 0.25s ease;
@@ -261,5 +311,18 @@ export default {
 .modal-fade-enter-from, .modal-fade-leave-to {
   opacity: 0;
   transform: scale(1.1);
+}
+
+.el-button--mini{
+  margin-top:8px;
+  font-family: Mantou;
+  color:#fdfdfd;
+}
+
+.detail{
+  margin-top:8px;
+  font-family: Mantou;
+  color:#a85e5e;
+  font-size: 1.1rem;
 }
 </style>
