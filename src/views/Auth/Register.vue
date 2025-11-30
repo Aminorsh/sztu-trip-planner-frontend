@@ -213,7 +213,7 @@ export default {
     }
 
     // 初始化验证码图片
-    reloadCaptcha()
+    
 
     return {
       registerFormRef, registerForm, registerRules,
