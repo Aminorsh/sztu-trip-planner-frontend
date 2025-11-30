@@ -20,9 +20,9 @@
             <el-icon><CirclePlus /></el-icon>新建行程
           </el-button>
         </nav>
-        <div class="sidebar-decor">
-          <img :src="heroTravel" alt="decor" class="sidebar-img" />
-        </div>
+        <!-- <div class="sidebar-decor"> -->
+          <!-- <img :src="img9" alt="decor" class="sidebar-img" /> -->
+        <!-- </div> -->
       </aside>
 
       <!-- 中间主内容区 -->
@@ -93,9 +93,9 @@
           <div class="user-name">{{ user.name }}</div>
           <div class="user-nick">{{ user.nickname }}</div>
         </div>
-        <div class="right-decor">
-          <img :src="heroTravel" alt="decor" class="right-img" />
-        </div>
+        <!-- <div class="right-decor"> -->
+          <!-- <img :src="img7" alt="decor" class="right-img" /> -->
+        <!-- </div> -->
       </aside>
     </div>
   </div>
@@ -103,7 +103,17 @@
 
 <script>
 // 引入图片 & 图标组件
-import heroTravel from '@/assets/images/hero-travel.jpg'
+import heroTravel from '@/assets/images/16.jpg'
+import img1 from '@/assets/images/15.jpg'
+import img2 from '@/assets/images/14.jpg'
+import img3 from '@/assets/images/13.jpg'
+import img4 from '@/assets/images/12.jpg'
+import img5 from '@/assets/images/11.jpg'
+import img6 from '@/assets/images/10.jpg'
+import img7 from '@/assets/images/7.jpg'
+import img8 from '@/assets/images/8.jpg'
+import img9 from '@/assets/images/9.jpg'
+
 import {
   View, Edit, Delete, Share, House, CirclePlus, Search
 } from '@element-plus/icons-vue'
@@ -114,6 +124,7 @@ export default {
   data() {
     return {
       heroTravel,
+      img1,img2,img3,img4,img5,img6,img7,img8,img9,
       user: {
         name: '张三',
         nickname: '旅行者',
@@ -123,7 +134,7 @@ export default {
       trips: [
         {
           id: 't1',
-          coverImage: '',
+          coverImage: img1,
           title: '东京＋箱根 5 日游',
           startDate: '2025-06-01',
           endDate: '2025-06-05',
@@ -131,7 +142,7 @@ export default {
         },
         {
           id: 't2',
-          coverImage: '',
+          coverImage: img2,
           title: '巴黎 7 日文化游',
           startDate: '2025-07-10',
           endDate: '2025-07-16',
@@ -139,7 +150,7 @@ export default {
         },
         {
           id: 't3',
-          coverImage: '',
+          coverImage: img3,
           title: '东南亚海岛 4 日',
           startDate: '2025-08-01',
           endDate: '2025-08-04',
@@ -147,7 +158,7 @@ export default {
         },
         {
           id: 't4',
-          coverImage: '',
+          coverImage: img4,
           title: '美国国家公园 10 日探险',
           startDate: '2025-09-01',
           endDate: '2025-09-10',
@@ -155,7 +166,7 @@ export default {
         },
         {
           id: 't5',
-          coverImage: '',
+          coverImage: img5,
           title: '巴厘岛休闲 6 日',
           startDate: '2025-10-05',
           endDate: '2025-10-10',
@@ -163,7 +174,7 @@ export default {
         },
         {
           id: 't6',
-          coverImage: '',
+          coverImage: img6,
           title: '意大利南部 8 日游',
           startDate: '2025-11-01',
           endDate: '2025-11-08',
@@ -200,7 +211,39 @@ export default {
 
 <style scoped>
 /* ---------- 基础布局 ---------- */
+
+@font-face {
+  font-family: 'Mantou';
+  src: url('/src/assets/font/love.ttf') format('truetype');
+
+  font-style: normal;
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'Hou';
+  src: url('/src/assets/font/1.ttf') format('truetype');
+
+  font-style: normal;
+  font-weight: 400;
+}
+
+
+.mantou {
+  font-family: 'Mantou', sans-serif;
+  letter-spacing: 0.02em;
+  font-size: 1.1rem;
+  font-weight: 400;
+}
+
+.Hou {
+  font-family: 'Hou', sans-serif;
+  letter-spacing: 0.05em;
+  font-size: 1.1rem;
+  font-weight: 10;
+}
 .dashboard-page {
+  font-family: 'Mantou';
   position: relative;
   width: 100%;
   min-height: 100vh;
@@ -240,7 +283,7 @@ export default {
 .sidebar-logo {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #8c88ff;
+  color: #fcfcfc;
   margin-bottom: 40px;
 }
 .sidebar-menu {
@@ -251,7 +294,7 @@ export default {
 }
 .menu-btn {
   text-align: left;
-  color: #8c88ff;
+  color: #f4f4f7;
   font-size: 1rem;
   display: flex;
   align-items: center;
@@ -331,11 +374,11 @@ export default {
   font-size: 1.2rem;
   font-weight: 600;
   margin-bottom: 6px;
-  color: #8c88ff;
+  color: #343097;
 }
 .card-meta {
   font-size: 0.9rem;
-  color: #555;
+  color: #161c5e;
   margin-bottom: 12px;
 }
 .card-actions {
@@ -344,9 +387,20 @@ export default {
   gap: 8px;
 }
 .card-actions .el-button {
+  font-family: Hou;
+  color:#373f89;
   display: inline-flex;
   align-items: center;
+  border-color: #f3f4f6;
   gap: 4px;
+}
+
+
+
+
+.el-button--danger { 
+  background: #ffffff;
+  border-color: #f3f4f6;
 }
 
 /* ---------- 右栏 ---------- */
@@ -376,7 +430,7 @@ export default {
 }
 .user-nick {
   font-size: 0.9rem;
-  color: #dcdcff;
+  color: #333399;
 }
 .right-img {
   width: 100%;

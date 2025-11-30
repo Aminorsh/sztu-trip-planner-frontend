@@ -22,3 +22,4 @@ app.use(ElementPlus)
 
 // 4. 挂载
 app.mount('#app')
+

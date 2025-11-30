@@ -11,8 +11,8 @@
           <!-- <el-button type="text" class="nav-btn">关于我们</el-button> -->
         <!-- </nav> -->
         <div class="auth-buttons">
-          <el-button class="btn-small btn-soft" @click="onLogin">登录</el-button>
-          <el-button class="btn-small btn-soft" @click="onRegister">注册</el-button>
+          <el-button class="btn-small btn-soft Mantou" @click="onLogin">登录</el-button>
+          <el-button class="btn-small btn-soft Mantou" @click="onRegister">注册</el-button>
         </div>
       </div>
     </header>
@@ -31,9 +31,9 @@
       <div class="hero-overlay-shape"></div>
       <div class="container hero-inner">
         <div class="hero-text">
-          <h1 class="hero-title">创造你的旅程 · 留下真实足迹</h1>
+          <h1 class="hero-title ">创造你的旅程 · 留下真实足迹</h1>
           <p class="hero-subtitle">拖拽景点 · 可视化地图 · 与好友同步规划</p>
-          <el-button class="btn-small btn-soft-cta" @click="onGetStarted">马上开始</el-button>
+          <el-button class="btn-small btn-soft-cta " @click="onGetStarted">马上开始</el-button>
         </div>
       </div>
     </section>
@@ -41,7 +41,7 @@
     <!-- 功能 / 亮点展示 -->
     <section class="features">
       <div class="container">
-        <h2 class="section-title">主要功能</h2>
+        <h2 class="section-title Hou">主要功能</h2>
         <div class="features-grid">
           <div class="feature" v-for="feature in features" :key="feature.id" :style="{ backgroundImage: `url(${feature.icon})` }">
             <!-- <img class="feature-icon" :src="feature.icon" :alt="feature.title" />   -->
@@ -59,7 +59,7 @@
     <!-- 示例行程展示 -->
     <section class="examples">
       <div class="container">
-        <h2 class="section-title">热门行程示例</h2>
+        <h2 class="section-title Hou">热门行程示例</h2>
         <div class="cards-grid">
           <div class="card" v-for="trip in exampleTrips" :key="trip.id" @click="onViewTrip(trip.id)" :style="{ backgroundImage: `url(${trip.coverImage})` }">
             <!-- <div class="card-image-wrapper"> -->
@@ -78,7 +78,7 @@
     <!-- 用户评价 / 信任标识 -->
     <section class="testimonials">
       <div class="container">
-        <h2 class="section-title">用户心声</h2>
+        <h2 class="section-title Hou">用户心声</h2>
         <div class="testimonial-grid">
           <div class="testimonial" v-for="item in testimonials" :key="item.id" >
             <div class="testimonial-avatar-wrapper">
@@ -199,10 +199,45 @@ export default {
 </script>
 
 <style scoped>
+
+@font-face {
+  font-family: 'Mantou';
+  src: url('/src/assets/font/love.ttf') format('truetype');
+
+  font-style: normal;
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'Hou';
+  src:url('/src/assets/font/1.ttf') format('truetype');
+
+  font-style: normal;
+  font-weight: 400;
+}
+
+
+.mantou {
+  font-family: 'Mantou', sans-serif;
+  letter-spacing: 0.02em;
+  font-size: 1.1rem;
+  font-weight: 400;
+}
+
+.Hou {
+  font-family: 'Hou', sans-serif;
+  letter-spacing: 0.05em;
+  font-size: 2.1rem;
+  font-weight: 1;
+}
+
 /* 字体 &背景基调设定 */
+
+
+
 .home-page {
-  font-family: 'Poppins', 'Nunito Sans', sans-serif;
-  color: #eaeaf2;
+  font-family: 'Mantou';
+  color: #fcfcfc;
   background-color: #f8f8fb;
 }
 .container {
@@ -226,16 +261,16 @@ export default {
   height: 64px;
 }
 .logo {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: #8c88ff;
+  font-size: 2.0rem;
+  font-weight: 1000;
+  color: #2a2785;
 }
 .nav-menu {
   display: flex;
   gap: 20px;
 }
 .nav-btn {
-  color: #8c88ff;
+  color: #2a2785;
   padding: 6px 12px;
   border-radius: 16px;
   transition: background-color 0.2s ease;
@@ -244,6 +279,7 @@ export default {
   background-color: #f4f4ff;
 }
 .auth-buttons .btn-small {
+  font-family: 'Mantou';
   padding: 6px 18px;
   border-radius: 20px;
   font-size: 0.9rem;
@@ -259,8 +295,11 @@ export default {
   transform: scale(0.97);
 }
 .btn-small.btn-soft {
+  font-size: 1.3rem;
+  font-weight: 100;
+  font-family: 'Mantou';
   background-color: #ffffff;
-  color: #8c88ff;
+  color: #2a2785;
   border: none;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
@@ -268,12 +307,13 @@ export default {
   background-color: #f7f7ff;
 }
 .btn-small.btn-soft-cta {
+  
   background-color: #f4f4ff;
-  color: #8c88ff;
+  color: #2a2785;
   border: none;
   border-radius: 20px;
-  padding: 10px 22px;
-  font-size: 1rem;
+  padding: 1px 22px;
+  font-size: 1.0rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 .btn-small.btn-soft-cta:hover {
@@ -320,12 +360,16 @@ export default {
   max-width: 600px;
 }
 .hero-title {
+  font-family: Hou;
+  white-space: nowrap;
   font-size: 3rem;
-  font-weight: 700;
+  font-weight: 80;
+  width:100%;
   margin-bottom: 12px;
 }
 .hero-subtitle {
-  font-size: 1.125rem;
+  width:100%;
+  font-size: 1.5rem;
   margin-bottom: 28px;
   opacity: 0.9;
 }
@@ -419,11 +463,12 @@ export default {
   background-repeat: no-repeat;
 }
 .section-title {
+  font-family: Hou;
   text-align: center;
-  font-size: 2.25rem;
-  font-weight: 700;
+  font-size: 3rem;
+  font-weight: 80;
   margin-bottom: 40px;
-  color: #8c88ff;
+  color: #1b1b1d;
 }
 .cards-grid {
   display: grid;
@@ -530,13 +575,15 @@ export default {
   object-fit: cover;
 }
 .testimonial-text {
-  font-size: 1rem;
-  color: #777;
+  font-size: 1.3rem;
+  color: #b89090;
   margin-bottom: 16px;
 }
 .testimonial-name {
-  font-size: 0.9rem;
-  color: #8c88ff;
+  font-family: Mantou;
+  font-size: 1.2rem;
+  font-weight: 1000;
+  color: #221f7b;
   display: block;
   text-align: center;
 }
@@ -544,7 +591,7 @@ export default {
 /* 页脚 */
 .footer {
   padding: 48px 0;
-  background-color: #f8f8fb;
+  background-color: #21145b;
   border-top: 1px solid #eee;
 }
 .footer-inner {

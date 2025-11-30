@@ -229,7 +229,22 @@ export default {
 
 
 <style scoped>
+
+.mantou {
+  font-family: 'Mantou', sans-serif;
+  letter-spacing: 0.02em;
+  font-size: 1.1rem;
+  font-weight: 400;
+}
+
+.Hou {
+  font-family: 'Hou', sans-serif;
+  letter-spacing: 0.05em;
+  font-size: 1.1rem;
+  font-weight: 10;
+}
 .auth-page {
+  font-family: 'Mantou';
   position: relative;
   width: 100%;
   min-height: 100vh;
@@ -241,7 +256,7 @@ export default {
 .bg-image {
   position: absolute;
   inset: 0;
-  background: url('../../assets/images/hero-travel.jpg') no-repeat center/cover;
+  background: url('../../assets/images/16.jpg') no-repeat center/cover;
   z-index: 0;
 }
 .bg-overlay {
@@ -256,7 +271,7 @@ export default {
   width: 90%;
   max-width: 400px;
   padding: 32px;
-  background: rgba(255,255,255,0.85) url('../../assets/images/hero-travel4.jpg') no-repeat center/cover;
+  background: rgba(255,255,255,0.85) url('../../assets/images/17.jpg') no-repeat center/cover;
   background-size: cover;
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.04);
@@ -264,14 +279,14 @@ export default {
 .auth-title {
   text-align: center;
   margin-bottom: 24px;
-  font-size: 1.8rem;
-  color: #b3b3f8;
+  font-size: 3.0rem;
+  color: #2f2f9d;
 }
 .auth-btn {
   width: 100%;
   border-radius: 22px;
   border: #8c88ff;
-  background: #b3b3f8;
+  background: #2f2f9d;
 }
 .social-login {
   display: flex;
@@ -289,14 +304,20 @@ export default {
 }
 .auth-links a {
   text-decoration: none;
-  color: #cfcffb;
+  color: rgb(251, 251, 251);
+  font-size: 1.1rem;
   transition: color 0.2s ease;
 }
 .auth-links a:hover {
-  color: #8c88ff;
+  color: #2f2f9d;
 }
 
+.el-button.is-disabled{
+  border:#2f2f9d;
+  background: #2f2f9d;;
+}
 .captcha-row {
+  color: #2f2f9d;
   display: flex;
   align-items: center;
   gap: 10px;

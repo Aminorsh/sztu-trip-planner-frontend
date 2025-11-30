@@ -5,8 +5,8 @@
     <header class="top-nav">
       <div class="logo">TravelPlanner</div>
       <div class="nav-buttons">
-        <el-button class="btn-nav" @click="goBack">返回</el-button>
-        <el-button class="btn-nav btn-add" type="primary" @click="onAddToItinerary">
+        <el-button class="btn-nav mantou" @click="goBack">返回</el-button>
+        <el-button class="btn-nav btn-add mantou" type="primary" @click="onAddToItinerary">
           + 加入行程
         </el-button>
       </div>
@@ -15,11 +15,21 @@
     <div class="content-wrapper">
       <!-- 左列：两张图片（圆 + 矩形） -->
       <div class="image-column">
-        <div class="image-circle">
-          <img :src="coverImages[0]" alt="图片圆形" />
-        </div>
-        <div class="image-rect">
-          <img :src="coverImages[1]" alt="图片矩形" />
+        <!-- <div class="image-circle"> -->
+          <!-- <img :src="coverImages[0]" alt="图片圆形" /> -->
+        <!-- </div> -->
+        <!-- <div class="image-rect"> -->
+          <!-- <img :src="coverImages[1]" alt="图片矩形" /> -->
+        <!-- </div> -->
+        <div class="image-grid">
+          <div class="img-item hero-img" :style="{ gridColumn: '1 / 3' }">
+            <img :src="coverImages[0]" alt="hero" />
+            <!-- <div class="img-text mantou">找一家有故事的民宿，度过一个悠闲的假期。感受这里的慢时光，让生活回归简单与纯粹。</div> -->
+          </div>
+          <div class="img-item" v-for="i in 6" :key="i">
+              <img :src="coverImages[i]" alt="place-img" />
+              
+          </div>
         </div>
       </div>
 
@@ -33,7 +43,7 @@
             </el-form-item>
           </div>
           <!-- 地址 / 类别 -->
-          <div class="form-row two-cols">
+          <div class="form-row two-cols mantou">
             <div class="col">
               <el-form-item label="地址">
                 <el-input v-model="place.address" disabled />
@@ -87,31 +97,39 @@
     </div>
 
     <!-- 下方：地图 & 亮点 & 加入按钮 -->
-    <div class="extra-section">
-      <div class="map-mini">
-        <img :src="mapPlaceholder" alt="地图预览" />
-      </div>
-      <div class="highlights">
-        <h3>亮点</h3>
-        <ul>
-          <li v-for="(hl, i) in place.highlights" :key="i">{{ hl }}</li>
-        </ul>
-      </div>
-    </div>
+    <!-- <div class="extra-section"> -->
+      <!-- <div class="map-mini"> -->
+        <!-- <img :src="mapPlaceholder" alt="地图预览" /> -->
+      <!-- </div> -->
+      <!-- <div class="highlights"> -->
+        <!-- <h3>亮点</h3> -->
+        <!-- <ul> -->
+          <!-- <li v-for="(hl, i) in place.highlights" :key="i">{{ hl }}</li> -->
+        <!-- </ul> -->
+      <!-- </div> -->
+    <!-- </div> -->
   </div>
 </template>
 
 <script>
-import heroTravel from '@/assets/images/hero-travel.jpg'
+import heroTravel from '@/assets/images/14.jpg'
 import heroTravel2 from '@/assets/images/hero-travel2.jpg'
 import mapPlaceholder from '@/assets/images/hero-travel3.jpg'
+import trip1img from '/src/assets/images/5.jpg'
+import trip2img from '/src/assets/images/6.jpg'
+import img1 from '@/assets/images/11.jpg'
+import img2 from '@/assets/images/12.jpg'
+import img3 from '@/assets/images/13.jpg'
+import img4 from '@/assets/images/15.jpg'
+import trip3img from '/src/assets/images/7.jpg'
+import avatar3 from '/src/assets/images/10.jpg'
 import { defineComponent } from 'vue'
 
 export default defineComponent({
   name: 'PlaceDetail',
   data() {
     return {
-      coverImages: [heroTravel, heroTravel2],
+      coverImages: [img4,img1,img2,img3,trip2img,trip3img,avatar3],
       mapPlaceholder,
       place: {
         id: 'p1',
@@ -146,10 +164,11 @@ export default defineComponent({
 
 <style scoped>
 .place-detail-page {
-  font-family: 'Poppins', 'Nunito Sans', sans-serif;
-  background-color: #f8f8fb;
+  font-family: 'Mantou';
+  background-color: #fdfdfd;
   color: #333;
   padding: 12px 16px;
+  font-size: 2.5rem;
 }
 
 /* 顶部导航栏 */
@@ -159,7 +178,8 @@ export default defineComponent({
   align-items: center;
 }
 .logo {
-  font-size: 1.8rem;
+  font-weight: 400;
+  font-size: 2.5rem;
   font-weight: bold;
   color: #8c88ff;
 }
@@ -207,7 +227,7 @@ export default defineComponent({
   flex: 2;
 }
 .info-form {
-  background: #ffffff;
+  background: #ece8ef;
   border-radius: 14px;
   padding: 24px;
   box-shadow: 0 12px 30px rgba(0,0,0,0.06);
@@ -251,6 +271,14 @@ export default defineComponent({
   color: #555;
 }
 
+@font-face {
+  font-family: 'Mantou';
+  src: url('/src/assets/font/love.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-weight: 400;
+}
+
 /* — 响应式媒体查询 — */
 @media (max-width: 1024px) {
   .content-wrapper {
@@ -287,4 +315,55 @@ export default defineComponent({
     width: 100%;
   }
 }
+
+/* 3 行 3 列网格 */
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2 列 */
+  grid-auto-rows: 100px;                /* 每行固定高 */
+  gap: 12px;
+}
+
+/* 第一行大图 */
+.hero-img {
+  grid-column: 1 / 3;   /* 占满 2 列 */
+  grid-row: 1 / 3;      /* 第 1 行 */
+  position: relative;
+}
+
+
+.mantou {
+  font-family: 'Mantou', sans-serif;
+  letter-spacing: 0.02em;
+  font-size: 1.1rem;
+  font-weight: 400;
+}
+/* 文字覆盖 */
+.img-text {
+  
+  
+  position: absolute;
+  bottom: 12px; left: 12px;
+  color: #fcfcfc;
+  /* background: rgba(0,0,0,0.45); */
+  padding: 6px 12px;
+  border-radius: 6px;
+  
+}
+
+.img-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* 响应式：屏幕窄时变 2 列 */
+@media (max-width: 1024px) {
+  .image-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 </style>

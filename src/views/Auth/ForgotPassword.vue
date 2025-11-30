@@ -19,6 +19,7 @@
             placeholder="请输入注册邮箱"
             prefix-icon="el-icon-message"
             clearable
+            class="Mantou"
           />
         </el-form-item>
       </el-form>
@@ -28,7 +29,7 @@
         :model="forgotForm"
         :rules="forgotRules"
         label-position="top"
-        class="auth-form"
+        class="auth-form Mantou"
       >
         <!-- <el-form-item prop="emailOrUsername"> -->
           <!-- <el-input -->
@@ -46,6 +47,7 @@
             placeholder="新密码 (6~20 位)"
             prefix-icon="el-icon-lock"
             show-password
+            class="Mantou"
           />
         </el-form-item>
 
@@ -56,6 +58,7 @@
             placeholder="确认新密码"
             prefix-icon="el-icon-lock"
             show-password
+            class="Mantou"
           />
         </el-form-item>
 
@@ -65,7 +68,7 @@
             type="primary"
             :loading="codeSending"
             @click="sendForgetCode"
-            class="auth-btn"
+            class="auth-btn Mantou"
           >发送验证码</el-button>
         </el-form-item>
 
@@ -74,7 +77,7 @@
             type="primary"
             :loading="loading"
             @click="submitForgot"
-            class="auth-btn"
+            class="auth-btn Mantou"
           >重置密码</el-button>
         </el-form-item>
 
@@ -206,19 +209,34 @@ export default {
 </script>
 
 <style scoped>
+
+.mantou {
+  font-family: 'Mantou', sans-serif;
+  letter-spacing: 0.02em;
+  font-size: 1.1rem;
+  font-weight: 100;
+}
+
+.Hou {
+  font-family: 'Hou', sans-serif;
+  letter-spacing: 0.05em;
+  font-size: 1.1rem;
+  font-weight: 100;
+}
 .auth-page {
+  font-family: 'Mantou';
   position: relative;
   width: 100%;
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  color: #eaeaf2;
+  color: #2f2f9d;
 }
 .bg-image {
   position: absolute;
   inset: 0;
-  background: url('../../assets/images/hero-travel.jpg') no-repeat center/cover;
+  background: url('../../assets/images/9.jpg') no-repeat center/cover;
   z-index: 0;
 }
 .bg-overlay {
@@ -233,7 +251,7 @@ export default {
   width: 90%;
   max-width: 380px;
   padding: 32px;
-  background: rgba(255,255,255,0.85) url('../../assets/images/hero-travel4.jpg') no-repeat center/cover;
+  background: rgba(255,255,255,0.85) url('../../assets/images/13.jpg') no-repeat center/cover;
   background-size: cover;
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.04);
@@ -241,8 +259,8 @@ export default {
 .auth-title {
   text-align: center;
   margin-bottom: 24px;
-  font-size: 1.8rem;
-  color: #d0d0f8;
+  font-size: 2.2rem;
+  color: #fbfbfb;
 }
 .auth-btn {
   width: 100%;
@@ -258,12 +276,16 @@ export default {
 }
 .auth-links a {
   text-decoration: none;
-  color: #cfcffb;
+  color: #f6f6f8;
+  font-size: 1.3rem;
+  font-weight: 100;
   transition: color 0.2s ease;
 }
 .auth-links a:hover {
   color: #8c88ff;
+
 }
+
 
 .captcha-row{
   width: 100%;
@@ -272,5 +294,6 @@ export default {
 .auth-btn{
   margin-top:12px;
   margin-bottom: 12px;
+  
 }
 </style>

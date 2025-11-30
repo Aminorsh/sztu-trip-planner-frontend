@@ -274,9 +274,40 @@ export default {
 
 <style scoped>
 
+@font-face {
+  font-family: 'Mantou';
+  src: url('/src/assets/font/love.ttf') format('truetype');
+
+  font-style: normal;
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'Hou';
+  src: url('/src/assets/font/1.ttf') format('truetype');
+
+  font-style: normal;
+  font-weight: 400;
+}
+
+
+.mantou {
+  font-family: 'Mantou', sans-serif;
+  letter-spacing: 0.02em;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.Hou {
+  font-family: 'Hou', sans-serif;
+  letter-spacing: 0.05em;
+  font-size: 1.1rem;
+  font-weight: 10;
+}
+
 .bg-image { position:absolute; inset:0; background-repeat:no-repeat; background-position:center; background-size:cover; z-index:0; }
 .profile-page {
-  font-family: 'Poppins', 'Nunito Sans', sans-serif;
+  font-family: 'Mantou';
   color: #303133;
   background-color: #f8f8fb;
 }
@@ -294,14 +325,14 @@ export default {
 .logo {
   font-size: 1.6rem;
   font-weight: 700;
-  color: #8c88ff;
+  color: #2a2785;
 }
 .nav-menu {
   display: flex;
   gap: 20px;
 }
 .nav-btn {
-  color: #8c88ff;
+  color: #2a2785;
   padding: 6px 12px;
   border-radius: 16px;
   transition: background-color 0.2s ease;
@@ -314,7 +345,7 @@ export default {
   border-radius: 20px;
   font-size: 0.9rem;
   background-color: #ffffff;
-  color: #8c88ff;
+  color: #2a2785;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 .section-title {
@@ -322,7 +353,7 @@ export default {
   font-weight: 600;
   margin-top: 40px;
   margin-bottom: 20px;
-  color: #8c88ff;
+  color: #2a2785;
   text-align: left;
 }
 .form-section {
@@ -350,7 +381,7 @@ export default {
 }
 .avatar-placeholder {
   font-size: 48px;
-  color: #8c88ff;
+  color: #2a2785;
 }
 .danger-section {
   padding: 24px;
@@ -380,7 +411,7 @@ export default {
   font-size: 0.9rem;
 }
 .footer-link:hover {
-  color: #8c88ff;
+  color: #2a2785;
 }
 .footer-copyright {
   font-size: 0.85rem;

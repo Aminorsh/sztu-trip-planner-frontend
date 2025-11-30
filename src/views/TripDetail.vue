@@ -156,8 +156,8 @@
 import draggable from 'vuedraggable'
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
-import heroTravel from '@/assets/images/hero-travel4.jpg'
-import heroTravel5 from '@/assets/images/hero-travel5.png'
+import heroTravel from '@/assets/images/17.jpg'
+import heroTravel5 from '@/assets/images/19.jpg'
 import PlaceSearch from './PlaceSearch.vue'
 import ExportPanel from './ExportPanel.vue'
 
@@ -288,8 +288,39 @@ export default {
 </script>
 
 <style scoped>
+@font-face {
+  font-family: 'Mantou';
+  src: url('/src/assets/font/love.ttf') format('truetype');
+
+  font-style: normal;
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'Hou';
+  src:url('/src/assets/font/1.ttf') format('truetype');
+
+  font-style: normal;
+  font-weight: 400;
+}
+
+
+.mantou {
+  font-family: 'Mantou', sans-serif;
+  letter-spacing: 0.02em;
+  font-size: 1.1rem;
+  font-weight: 400;
+}
+
+.Hou {
+  font-family: 'Hou', sans-serif;
+  letter-spacing: 0.05em;
+  font-size: 2.1rem;
+  font-weight: 1;
+}
+
 /* 保持你原来样式或微调，这里略写基础样式 */
-.trip-page { position: relative; width:100%; min-height:100vh; color: #f3f4f6; background: #f8f8fb; }
+.trip-page { font-family:'Mantou';position: relative; width:100%; min-height:100vh; color: #f3f4f6; background: #f8f8fb; }
 .bg-image { position:absolute; inset:0; background-repeat:no-repeat; background-position:center; background-size:cover; z-index:0; }
 .bg-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.4); z-index:1; }
 .trip-inner { position:relative; z-index:2; display:flex; flex-direction:column; height:100%; }
