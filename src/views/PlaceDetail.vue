@@ -227,7 +227,7 @@ export default defineComponent({
   flex: 2;
 }
 .info-form {
-  background: #ece8ef;
+  background: linear-gradient(to bottom, #e4e8f4 0%,#a0e6ff59 55%, #ffffff 100%);
   border-radius: 14px;
   padding: 24px;
   box-shadow: 0 12px 30px rgba(0,0,0,0.06);

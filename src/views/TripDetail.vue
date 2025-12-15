@@ -200,25 +200,23 @@ export default {
       heroTravel,
       heroTravel5,
       trip: {
-        title: '东京＋箱根 5 日游 示例',
+        title: '北京 5 日游',
         status: '进行中'
       },
       tripDays: 5,
       currentDay: 2,
       dayItems: [
-        { id: 'i1', name: '浅草寺', time: '09:00', note: '建议早点去避开人潮', priority: '中' },
-        { id: 'i2', name: '秋叶原漫步', time: '12:00', note: '电子产品 & 动漫', priority: '中' },
-        { id: 'i3', name: '银座午餐', time: '14:00', note: '购物 + 美食', priority: '低' },
-        { id: 'i4', name: '东京塔夜景', time: '19:00', note: '夜景推荐', priority: '高' },
-        { id: 'i5', name: '涉谷步行', time: '21:00', note: '', priority: '低' },
-        { id: 'i6', name: '六本木夜游', time: '22:30', note: '夜晚轻松散步', priority: '中' }
+        { id: 'b1-1', name: '天安门广场',   time: '08:00', note: '升旗仪式，建议提前 30 min 到', priority: '高' },
+        { id: 'b1-2', name: '故宫博物院',   time: '09:30', note: '提前网上购票，午门进神武门出', priority: '高' },
+        { id: 'b1-3', name: '景山公园',     time: '14:00', note: '登顶万春楼俯瞰紫禁城全景', priority: '中' },
+        { id: 'b1-4', name: '王府井步行街', time: '17:30', note: '老字号小吃+伴手礼', priority: '低' }
       ],
       selectedItem: null,
       lastSaved: new Date().toLocaleString(),
       daySummary: {
-        overview: '从浅草寺、秋叶原出发，途经银座，傍晚前往东京塔夜景，夜间到涉谷漫步。',
-        totalDistance: '15.2 km',
-        totalTime: '6 小时 10 分钟',
+        overview: '中轴线核心一日：天安门升旗→故宫深度游→景山俯瞰→王府井夜宵。',
+        totalDistance: '7.8 km',
+        totalTime: '8 小时 30 分钟',
         photos: [heroTravel, heroTravel, heroTravel]
       },
       calendarOptions: {
@@ -246,10 +244,92 @@ export default {
       },
       selectedDate: null,
       showPlaceSearch: false,
-      exportVisible: false
+      exportVisible: false,
+      map: null,                  // AMap.Map 实例
+      polyline: null,             // 路线折线实例
+      markers: []                 // 所有点标记
+      
     }
   },
+
+  mounted() {
+  this.$nextTick(() => {
+    this.initMap()              // DOM 渲染完再初始化
+  })
+  },
+
   methods: {
+
+    /* 1. 初始化地图 */
+    initMap() {
+      const dom = this.$refs.mapContainer
+      this.map = new AMap.Map(dom, {
+        zoom: 11,
+        center: [116.397428, 39.90923],   // 默认北京天安门
+        resizeEnable: true
+      })
+      this.drawRoute()              // 画点+连线
+    },
+
+    /* 2. 根据 dayItems 画 marker + 连线 */
+    drawRoute() {
+      if (!this.map) return
+
+      // 先清掉上一次
+      this.map.remove(this.markers)
+      this.markers = []
+      if (this.polyline) this.map.remove(this.polyline)
+
+      // 这里只演示「写死坐标」，实际项目请调高德 GeoCoder 把地址→经纬度
+      const coords = this.dayItems.map((item, idx) => {
+        // 示例：提前准备好常去景点的坐标
+        const coordMap = {
+          '天安门广场': [116.397428, 39.90923],
+          '故宫博物院': [116.397731, 39.916485],
+          '景山公园': [116.391467, 39.925929],
+          '王府井步行街': [116.413384, 39.913312],
+          '八达岭长城': [116.023773, 40.36488],
+          '明十三陵': [116.235774, 40.292098],
+          '颐和园': [116.275525, 39.999838],
+          '圆明园': [116.309334, 40.008222],
+          '天坛公园': [116.407386, 39.882652],
+          '南锣鼓巷': [116.403169, 39.937736],
+          '鸟巢': [116.397515, 39.992838],
+          '水立方': [116.390132, 39.993854]
+        }
+        const lnglat = coordMap[item.name] || [116.397428, 39.90923] // 找不到就默认天安门
+        return { name: item.name, lnglat, idx }
+      })
+
+      // 画 marker
+      coords.forEach(({ name, lnglat, idx }) => {
+        const marker = new AMap.Marker({
+          position: new AMap.LngLat(...lnglat),
+          title: `${idx + 1}. ${name}`,
+          label: { content: `${idx + 1}`, direction: 'center' }
+        })
+        this.markers.push(marker)
+      })
+      this.map.add(this.markers)
+
+      // 画折线
+      this.polyline = new AMap.Polyline({
+        path: coords.map(i => i.lnglat),
+        strokeColor: '#6262f3',
+        strokeWeight: 5,
+        strokeOpacity: 0.8,
+        lineJoin: 'round'
+      })
+      this.map.add(this.polyline)
+
+      // 自动缩放到所有点可见
+      this.map.setFitView([...this.markers, this.polyline], false, [40, 40, 40, 40])
+    },
+
+    /* 3. 以后每次增删改 dayItems 后重新绘制 */
+    refreshMap() {
+      this.drawRoute()
+    },
     saveTrip() {
       this.lastSaved = new Date().toLocaleString()
       console.log('保存行程')
@@ -306,11 +386,25 @@ export default {
       this.selectedItem = item
     },
     saveItem() {
-      console.log('保存项', this.selectedItem)
+      if (!this.selectedItem) return;
+
+      // 1. 写回 dayItems
+      const idx = this.dayItems.findIndex(i => i.id === this.selectedItem.id);
+      if (idx > -1) this.dayItems.splice(idx, 1, { ...this.selectedItem });
+
+      // 2. 刷新地图
+      this.refreshMap();
+
+      // 3. 更新保存时间
+      this.lastSaved = new Date().toLocaleString();
+
+      // 4. 用户提示
+      this.$message?.success?.('已保存') || console.log('已保存');
     },
     removeItem() {
       this.dayItems = this.dayItems.filter(i => i.id !== this.selectedItem.id)
       this.selectedItem = null
+      this.refreshMap()          // <-- 重绘
     },
     markVisited() {
       console.log('打卡 / 完成', this.selectedItem)
@@ -341,6 +435,7 @@ export default {
       }
       this.dayItems.push(newItem)
       this.showPlaceSearch = false
+      this.refreshMap()          // <-- 重绘
     },
     handleExported(exportResult) {
       console.log('收到导出结果：', exportResult)
