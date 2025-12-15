@@ -121,7 +121,11 @@
             <el-form :model="selectedItem" label-position="top">
               
               <el-form-item label="名称">
-                <el-input v-model="selectedItem.name" />
+                <el-input 
+                  v-model="selectedItem.name" 
+                  placeholder="请输入地点名称" 
+                  :input-attrs="{ id: 'tipInput' }"
+                />
               </el-form-item>
               <el-form-item label="时间">
                 <el-input v-model="selectedItem.time" />
@@ -247,16 +251,19 @@ export default {
       exportVisible: false,
       map: null,                  // AMap.Map 实例
       polyline: null,             // 路线折线实例
-      markers: []                 // 所有点标记
-      
+      markers: [],                 // 所有点标记
+      autoComplete: null
     }
   },
 
   mounted() {
-  this.$nextTick(() => {
-    this.initMap()              // DOM 渲染完再初始化
+    this.$nextTick(() => {
+    this.initMap()  
+    this.initAutoComplete()            // DOM 渲染完再初始化
+    this.drawRoute()   // ← 加 await
   })
-  },
+},
+    
 
   methods: {
 
@@ -268,40 +275,87 @@ export default {
         center: [116.397428, 39.90923],   // 默认北京天安门
         resizeEnable: true
       })
-      this.drawRoute()              // 画点+连线
+      
     },
-
-    /* 2. 根据 dayItems 画 marker + 连线 */
     drawRoute() {
       if (!this.map) return
 
-      // 先清掉上一次
+      // 0. 清掉上一次
       this.map.remove(this.markers)
       this.markers = []
       if (this.polyline) this.map.remove(this.polyline)
 
-      // 这里只演示「写死坐标」，实际项目请调高德 GeoCoder 把地址→经纬度
-      const coords = this.dayItems.map((item, idx) => {
-        // 示例：提前准备好常去景点的坐标
-        const coordMap = {
-          '天安门广场': [116.397428, 39.90923],
-          '故宫博物院': [116.397731, 39.916485],
-          '景山公园': [116.391467, 39.925929],
-          '王府井步行街': [116.413384, 39.913312],
-          '八达岭长城': [116.023773, 40.36488],
-          '明十三陵': [116.235774, 40.292098],
-          '颐和园': [116.275525, 39.999838],
-          '圆明园': [116.309334, 40.008222],
-          '天坛公园': [116.407386, 39.882652],
-          '南锣鼓巷': [116.403169, 39.937736],
-          '鸟巢': [116.397515, 39.992838],
-          '水立方': [116.390132, 39.993854]
-        }
-        const lnglat = coordMap[item.name] || [116.397428, 39.90923] // 找不到就默认天安门
-        return { name: item.name, lnglat, idx }
+      // 1. 本地坐标表
+      const coordMap = {
+        '天安门广场': [116.397428, 39.90923],
+        '故宫博物院': [116.397731, 39.916485],
+        '景山公园': [116.391467, 39.925929],
+        '王府井步行街': [116.413384, 39.913312],
+        '天坛公园': [116.407394, 39.88329],
+        '八达岭长城': [116.0237, 40.3643],
+        '颐和园': [116.2756, 39.9998],
+        '圆明园': [116.3016, 40.0081],
+        '北海公园': [116.3887, 39.9254],
+        '什刹海': [116.3867, 39.9413],
+        '南锣鼓巷': [116.4030, 39.9376],
+        '雍和宫': [116.4182, 39.9479],
+        '国子监': [116.4035, 39.9442],
+        '孔庙': [116.4035, 39.9442],
+        '前门大街': [116.3986, 39.9043],
+        '大栅栏': [116.3986, 39.9043],
+        '北京动物园': [116.3395, 39.9373],
+        '北京植物园': [116.2066, 40.0063],
+        '香山公园': [116.1938, 39.9911],
+        '奥林匹克公园': [116.3911, 40.0133],
+        '鸟巢': [116.3979, 39.9928],
+        '水立方': [116.3895, 39.9934],
+        '国家大剧院': [116.3918, 39.9037],
+        '央视总部大楼': [116.4588, 39.9138],
+        '三里屯太古里': [116.4472, 39.9376],
+        '清华园': [116.3267, 40.0044],
+        '北大西门': [116.3059, 39.9993],
+        '明十三陵-定陵': [116.2356, 40.2925],
+        '慕田峪长城': [116.5706, 40.4370],
+        '古北水镇': [117.0262, 40.6521],
+        '北京欢乐谷': [116.4888, 39.9973]   // 以后可继续追加
+      }
+
+      // 2. 收集需要地理编码的项
+      const needGeo = []        // 要请求的 {name, idx}
+      this.dayItems.forEach((it, idx) => {
+        if (it.lnglat || coordMap[it.name]) return   // 已有坐标或本地表命中
+        needGeo.push({ name: it.name, idx })
       })
 
-      // 画 marker
+      // 3. 真正去高德查经纬度
+      if (needGeo.length) {
+        const geocoder = new AMap.Geocoder({ city: '北京' })
+        Promise.all(
+          needGeo.map(
+            ({ name, idx }) =>
+              new Promise(resolve => {
+                geocoder.getLocation(name, (status, result) => {
+                  if (status === 'complete' && result.geocodes.length) {
+                    const loc = result.geocodes[0].location
+                    this.dayItems[idx].lnglat = [loc.lng, loc.lat]
+                  } else {
+                    // 实在搜不到再回天安门的兜底
+                    this.dayItems[idx].lnglat = [116.397428, 39.90923]
+                  }
+                  resolve()
+                })
+              })
+          )
+        )
+      }
+
+      // 4. 现在所有 dayItems 都有 lnglat 了，按老逻辑画点/线
+      const coords = this.dayItems.map((it, idx) => ({
+        name: it.name,
+        lnglat: it.lnglat || coordMap[it.name], // 本地表兜底
+        idx
+      }))
+
       coords.forEach(({ name, lnglat, idx }) => {
         const marker = new AMap.Marker({
           position: new AMap.LngLat(...lnglat),
@@ -312,7 +366,6 @@ export default {
       })
       this.map.add(this.markers)
 
-      // 画折线
       this.polyline = new AMap.Polyline({
         path: coords.map(i => i.lnglat),
         strokeColor: '#6262f3',
@@ -322,7 +375,6 @@ export default {
       })
       this.map.add(this.polyline)
 
-      // 自动缩放到所有点可见
       this.map.setFitView([...this.markers, this.polyline], false, [40, 40, 40, 40])
     },
 
@@ -330,6 +382,65 @@ export default {
     refreshMap() {
       this.drawRoute()
     },
+
+    // initAutoComplete() {
+      // AMap.plugin('AMap.AutoComplete', () => {
+        // this.autoComplete = new AMap.AutoComplete({
+          // input: 'amap-input',   // ✅ 字符串 id
+          // city: '北京'
+        // })
+      // 
+        // this.autoComplete.on('select', e => {
+          // const poi = e.poi
+          // this.selectedItem.name = poi.name
+        // 
+          // if (poi.location) {
+            // this.selectedItem.lnglat = [
+              // poi.location.lng,
+              // poi.location.lat
+            // ]
+          // }
+        // 
+          // this.refreshMap()
+        // })
+      // })
+    // },
+    initAutoComplete() {
+      if (this.autoComplete) return
+
+      AMap.plugin(['AMap.Autocomplete', 'AMap.PlaceSearch'], () => {
+        this.autoComplete = new AMap.Autocomplete({
+          input: 'tipInput',
+          city: '北京'
+        })
+      
+        this.autoComplete.on('select', e => {
+          const poi = e.poi
+          console.log('选中 POI:', poi)
+        
+          if (poi.location) {
+            // 设置输入框
+            this.inputSearchVal = poi.name
+          
+            // 地图居中
+            this.map.setCenter(poi.location)
+          
+            // 示例：加一个 marker
+            const marker = new AMap.Marker({
+              position: poi.location
+            })
+            this.map.add(marker)
+          }
+        })
+      
+        this.placeSearch = new AMap.PlaceSearch({
+          city: '北京',
+          map: this.map
+        })
+      })
+    },
+
+
     saveTrip() {
       this.lastSaved = new Date().toLocaleString()
       console.log('保存行程')
@@ -382,8 +493,14 @@ export default {
         }
        }).catch(() => {})
     },
-    selectItem(item) {
+    selectItem(item) { 
       this.selectedItem = item
+
+      if (!this.autoComplete) {
+        this.$nextTick(() => {
+          this.initAutoComplete()
+        })
+      }
     },
     saveItem() {
       if (!this.selectedItem) return;
@@ -396,6 +513,7 @@ export default {
       this.refreshMap();
 
       // 3. 更新保存时间
+      
       this.lastSaved = new Date().toLocaleString();
 
       // 4. 用户提示
@@ -405,6 +523,7 @@ export default {
       this.dayItems = this.dayItems.filter(i => i.id !== this.selectedItem.id)
       this.selectedItem = null
       this.refreshMap()          // <-- 重绘
+      
     },
     markVisited() {
       console.log('打卡 / 完成', this.selectedItem)
@@ -436,6 +555,7 @@ export default {
       this.dayItems.push(newItem)
       this.showPlaceSearch = false
       this.refreshMap()          // <-- 重绘
+      
     },
     handleExported(exportResult) {
       console.log('收到导出结果：', exportResult)
