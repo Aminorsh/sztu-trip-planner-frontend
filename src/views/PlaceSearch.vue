@@ -70,7 +70,7 @@
 
 <script>
 import { Search } from '@element-plus/icons-vue'
-import heroTravel from '@/assets/images/hero-travel.jpg'
+import heroTravel from '@/assets/images/14.jpg'
 
 export default {
   name: 'PlaceSearch',
@@ -108,13 +108,22 @@ export default {
     },
     fetchPlaces() {
       const sample = [
-        { id: 'p1', name: '浅草寺', address: '东京都台东区浅草2-3-1', description: '东京最古老、最著名的寺庙之一。', image: heroTravel, rating: 4.5, distance: 1.2, openingHours: '06:00-18:00', added: this.existingPlaceIds.includes('p1'), expanded: false },
-        { id: 'p2', name: '秋叶原电器街', address: '东京千代田区外神田', description: '电子、动漫文化圣地。', image: heroTravel, rating: 4.2, distance: 2.5, openingHours: '10:00-21:00', added: this.existingPlaceIds.includes('p2'), expanded: false },
-        { id: 'p3', name: '银座购物区', address: '东京中央区银座', description: '高端品牌林立的商业街区。', image: heroTravel, rating: 4.7, distance: 3.8, openingHours: '11:00-20:00', added: this.existingPlaceIds.includes('p3'), expanded: false },
-        { id: 'p4', name: '台场海滨公园', address: '东京港区台场1-4-1', description: '海滨散步 + 娱乐综合体。', image: heroTravel, rating: 4.4, distance: 4.1, openingHours: '09:00-22:00', added: this.existingPlaceIds.includes('p4'), expanded: false },
-        { id: 'p5', name: '明治神宫', address: '东京涩谷区代代木神园町1-1', description: '穿越森林的神社之一，环境宁静。', image: heroTravel, rating: 4.8, distance: 2.2, openingHours: '05:00-17:00', added: this.existingPlaceIds.includes('p5'), expanded: false },
-        { id: 'p6', name: '筑地市场', address: '东京中央区筑地5-2-1', description: '鲜活海鲜与寿司的天堂。', image: heroTravel, rating: 4.3, distance: 5.0, openingHours: '05:00-14:00', added: this.existingPlaceIds.includes('p6'), expanded: false }
-      ]
+        { id: 'p1',  name: '天安门广场',       address: '东城区天安门广场',        description: '祖国心脏，升旗仪式必看。',         image: heroTravel, rating: 4.7, distance: 0, openingHours: '05:00-22:00', added: this.existingPlaceIds.includes('p1'), expanded: false, lnglat: [116.397428, 39.90923] },
+        { id: 'p2',  name: '故宫博物院',       address: '东城区景山前街4号',        description: '世界最大古代宫殿群，震撼到脚软。', image: heroTravel, rating: 4.9, distance: 0, openingHours: '08:30-17:00', added: this.existingPlaceIds.includes('p2'), expanded: false, lnglat: [116.397731, 39.916485] },
+        { id: 'p3',  name: '景山公园',         address: '西城区景山西街44号',       description: '登顶万春楼，俯瞰紫禁城全景。',      image: heroTravel, rating: 4.6, distance: 0, openingHours: '06:30-20:00', added: this.existingPlaceIds.includes('p3'), expanded: false, lnglat: [116.391467, 39.925929] },
+        { id: 'p4',  name: '王府井步行街',     address: '东城区王府井大街',         description: '百年商业街，小吃+伴手礼一站搞定。', image: heroTravel, rating: 4.5, distance: 0, openingHours: '10:00-22:00', added: this.existingPlaceIds.includes('p4'), expanded: false, lnglat: [116.413384, 39.913312] },
+        { id: 'p5',  name: '北海公园',         address: '西城区文津街1号',          description: '皇家园林+白塔倒影，划船超浪漫。',   image: heroTravel, rating: 4.6, distance: 0, openingHours: '06:00-21:00', added: this.existingPlaceIds.includes('p5'), expanded: false, lnglat: [116.3887, 39.9242] },
+        { id: 'p6',  name: '什刹海',           address: '西城区什刹海地区',         description: '胡同+酒吧+三轮车，老北京夜生活首选。', image: heroTravel, rating: 4.4, distance: 0, openingHours: '全天', added: this.existingPlaceIds.includes('p6'), expanded: false, lnglat: [116.3867, 39.9413] },
+        { id: 'p7',  name: '南锣鼓巷',         address: '东城区南锣鼓巷',           description: '网红胡同，文创小店吃到扶墙。',        image: heroTravel, rating: 4.3, distance: 0, openingHours: '全天', added: this.existingPlaceIds.includes('p7'), expanded: false, lnglat: [116.4030, 39.9376] },
+        { id: 'p8',  name: '雍和宫',           address: '东城区雍和宫大街12号',     description: '皇家喇嘛庙，香火旺到怀疑人生。',     image: heroTravel, rating: 4.7, distance: 0, openingHours: '09:00-16:30', added: this.existingPlaceIds.includes('p8'), expanded: false, lnglat: [116.4182, 39.9479] },
+        { id: 'p9',  name: '鸟巢/水立方',      address: '朝阳区国家体育场南路1号', description: '奥运地标，夜景拍照无敌。',           image: heroTravel, rating: 4.5, distance: 0, openingHours: '09:00-21:00', added: this.existingPlaceIds.includes('p9'), expanded: false, lnglat: [116.3979, 39.9928] },
+        { id: 'p10', name: '颐和园',           address: '海淀区新建宫门路19号',     description: '皇家园林天花板，长廊+昆明湖美炸。',   image: heroTravel, rating: 4.8, distance: 0, openingHours: '06:30-18:00', added: this.existingPlaceIds.includes('p10'), expanded: false, lnglat: [116.2756, 39.9998] },
+        { id: 'p11', name: '圆明园',           address: '海淀区清华西路28号',       description: '万园之园遗址，历史感拉满。',          image: heroTravel, rating: 4.4, distance: 0, openingHours: '07:00-19:30', added: this.existingPlaceIds.includes('p11'), expanded: false, lnglat: [116.3016, 40.0081] },
+        { id: 'p12', name: '香山公园',         address: '海淀区买卖街40号',         description: '红叶圣地，秋天美成油画。',            image: heroTravel, rating: 4.6, distance: 0, openingHours: '06:00-18:00', added: this.existingPlaceIds.includes('p12'), expanded: false, lnglat: [116.1938, 39.9911] },
+        { id: 'p13', name: '北京动物园',       address: '西城区西直门外大街137号',  description: '看熊猫宝宝打滚，萌化少女心。',        image: heroTravel, rating: 4.3, distance: 0, openingHours: '07:30-18:00', added: this.existingPlaceIds.includes('p13'), expanded: false, lnglat: [116.3395, 39.9373] },
+        { id: 'p14', name: '前门大街',         address: '东城区前门大街',           description: '复古铛铛车+北京烤鸭，一次体验两种京味。', image: heroTravel, rating: 4.4, distance: 0, openingHours: '全天', added: this.existingPlaceIds.includes('p14'), expanded: false, lnglat: [116.3986, 39.9043] },
+        { id: 'p15', name: '天坛公园',         address: '东城区天坛路甲1号',        description: '明清皇帝祭天圣地，回音壁必打卡。',    image: heroTravel, rating: 4.7, distance: 0, openingHours: '06:00-22:00', added: this.existingPlaceIds.includes('p15'), expanded: false, lnglat: [116.407394, 39.88329] }
+      ];
       this.places = sample
     },
     toggleExpand(place) {

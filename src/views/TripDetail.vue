@@ -15,7 +15,6 @@
           <el-button size="mini" @click="saveTrip">保存</el-button>
           <el-button size="mini" @click="shareTrip">分享</el-button>
           <el-button size="mini" @click="exportVisible = true">导出</el-button>
-          <!-- <el-button size="mini" @click="openSettings">设置</el-button> -->
           <el-button size="mini" @click="showPlaceSearch = true">添加地点</el-button>
         </div>
       </header>
@@ -32,7 +31,6 @@
             >
               第 {{ idx + 1 }} 天
             </el-button>
-            <!-- 删除该天 -->
             <el-button
               type="text"
               icon="Delete"
@@ -57,10 +55,6 @@
                 </div>
               </template>
             </draggable>
-            <!-- <el-button type="text" class="add-item-btn" @click="addNewItem"> -->
-              <!-- + 添加行程项 -->
-            <!-- </el-button> -->
-            <!--  day-items 列表下方  -->
             <div class="bottom-actions">
               <el-button
                 type="text"
@@ -69,7 +63,6 @@
               >
               + 添加新的一天
               </el-button>
-
               <el-button
                 type="text"
                 class="add-item-btn"
@@ -86,10 +79,7 @@
         </aside>
         <!-- 中间：地图 + 概览摘要展示 -->
         <section class="trip-map">
-          <div class="map-container" ref="mapContainer">
-            <!-- 如果地图未接入，临时用一张背景做占位 -->
-            <!-- <div class="bg-image" :style="{ backgroundImage: `url(${heroTravel5})` }"></div> -->
-          </div>
+          <div class="map-container" ref="mapContainer"></div>
           <div class="map-tools">
             <el-button icon="el-icon-zoom-in" circle @click="zoomIn" />
             <el-button icon="el-icon-zoom-out" circle @click="zoomOut" />
@@ -114,17 +104,16 @@
         </section>
         <!-- 右侧：属性编辑 / 打卡等 -->
         <aside class="right-side">
-          
           <div v-if="selectedItem">
-            
             <h3 class="right-title">编辑项：{{ selectedItem.name }}</h3>
             <el-form :model="selectedItem" label-position="top">
-              
               <el-form-item label="名称">
-                <el-input 
-                  v-model="selectedItem.name" 
-                  placeholder="请输入地点名称" 
-                  :input-attrs="{ id: 'tipInput' }"
+                <!-- 改用 el-autocomplete -->
+                <input
+                  id="poiInput"
+                  v-model="selectedItem.name"
+                  placeholder="请输入地点名称"
+                  style="width:100%;height:32px;padding:0 8px;border:1px solid #ffffff;border-radius:4px,"
                 />
               </el-form-item>
               <el-form-item label="时间">
@@ -181,11 +170,11 @@
     />
   </div>
 </template>
-
 <script>
 import draggable from 'vuedraggable'
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
+import { debounce } from 'lodash'  // 导入debounce
 import heroTravel from '@/assets/images/27.jpg'
 import heroTravel5 from '@/assets/images/19.jpg'
 import PlaceSearch from './PlaceSearch.vue'
@@ -210,10 +199,10 @@ export default {
       tripDays: 5,
       currentDay: 2,
       dayItems: [
-        { id: 'b1-1', name: '天安门广场',   time: '08:00', note: '升旗仪式，建议提前 30 min 到', priority: '高' },
-        { id: 'b1-2', name: '故宫博物院',   time: '09:30', note: '提前网上购票，午门进神武门出', priority: '高' },
-        { id: 'b1-3', name: '景山公园',     time: '14:00', note: '登顶万春楼俯瞰紫禁城全景', priority: '中' },
-        { id: 'b1-4', name: '王府井步行街', time: '17:30', note: '老字号小吃+伴手礼', priority: '低' }
+        { id: 'b1-1', name: '天安门广场',   time: '08:00', note: '升旗仪式，建议提前 30 min 到', priority: '高', lnglat: [116.397428, 39.90923] },
+        { id: 'b1-2', name: '故宫博物院',   time: '09:30', note: '提前网上购票，午门进神武门出', priority: '高', lnglat: [116.397731, 39.916485] },
+        { id: 'b1-3', name: '景山公园',     time: '14:00', note: '登顶万春楼俯瞰紫禁城全景', priority: '中', lnglat: [116.391467, 39.925929] },
+        { id: 'b1-4', name: '王府井步行街', time: '17:30', note: '老字号小吃+伴手礼', priority: '低', lnglat: [116.413384, 39.913312] }
       ],
       selectedItem: null,
       lastSaved: new Date().toLocaleString(),
@@ -232,11 +221,12 @@ export default {
           right: ''
         },
         events: [
-          { title: '浅草寺', date: '2025-06-01', backgroundColor: '#6262f3', borderColor: '#6262f3' },
-          { title: '秋叶原漫步', date: '2025-06-02', backgroundColor: '#ff6f6f', borderColor: '#6262f3' },
-          { title: '银座午餐', date: '2025-06-03', backgroundColor: '#6fcfff', borderColor: '#6262f3' },
-          { title: '东京塔夜景', date: '2025-06-04', backgroundColor: '#d88cff', borderColor: '#6262f3' },
-          { title: '涉谷步行', date: '2025-06-05', backgroundColor: '#ffd86f', borderColor: '#6262f3' }
+        { title: '天安门广场',      date: '2025-06-01', backgroundColor: '#6262f3', borderColor: '#6262f3' },
+        { title: '故宫博物院',      date: '2025-06-02', backgroundColor: '#ff6f6f', borderColor: '#6262f3' },
+        { title: '景山公园',        date: '2025-06-03', backgroundColor: '#6fcfff', borderColor: '#6262f3' },
+        { title: '王府井步行街',    date: '2025-06-04', backgroundColor: '#d88cff', borderColor: '#6262f3' },
+        { title: '北海公园',        date: '2025-06-05', backgroundColor: '#ffd86f', borderColor: '#6262f3' }
+
         ],
         dateClick: this.onCalendarDateClick,
         dayCellClassNames: (info) => {
@@ -249,233 +239,307 @@ export default {
       selectedDate: null,
       showPlaceSearch: false,
       exportVisible: false,
-      map: null,                  // AMap.Map 实例
-      polyline: null,             // 路线折线实例
-      markers: [],                 // 所有点标记
-      autoComplete: null
+      map: null,
+      polyline: null,
+      markers: [],
+      geocoder: null,
+      placeSearch: null,
+      loading: false // 添加加载状态
     }
   },
 
   mounted() {
     this.$nextTick(() => {
-    this.initMap()  
-    this.initAutoComplete()            // DOM 渲染完再初始化
-    this.drawRoute()   // ← 加 await
-  })
-},
-    
+      this.initMap()
+      this.drawRoute()
+    })
+  },
 
   methods: {
-
     /* 1. 初始化地图 */
     initMap() {
       const dom = this.$refs.mapContainer
       this.map = new AMap.Map(dom, {
-        zoom: 11,
-        center: [116.397428, 39.90923],   // 默认北京天安门
+        zoom: 5,
+        center: [104.195397, 35.86166],
         resizeEnable: true
       })
-      
-    },
-    drawRoute() {
-      if (!this.map) return
-
-      // 0. 清掉上一次
-      this.map.remove(this.markers)
-      this.markers = []
-      if (this.polyline) this.map.remove(this.polyline)
-
-      // 1. 本地坐标表
-      const coordMap = {
-        '天安门广场': [116.397428, 39.90923],
-        '故宫博物院': [116.397731, 39.916485],
-        '景山公园': [116.391467, 39.925929],
-        '王府井步行街': [116.413384, 39.913312],
-        '天坛公园': [116.407394, 39.88329],
-        '八达岭长城': [116.0237, 40.3643],
-        '颐和园': [116.2756, 39.9998],
-        '圆明园': [116.3016, 40.0081],
-        '北海公园': [116.3887, 39.9254],
-        '什刹海': [116.3867, 39.9413],
-        '南锣鼓巷': [116.4030, 39.9376],
-        '雍和宫': [116.4182, 39.9479],
-        '国子监': [116.4035, 39.9442],
-        '孔庙': [116.4035, 39.9442],
-        '前门大街': [116.3986, 39.9043],
-        '大栅栏': [116.3986, 39.9043],
-        '北京动物园': [116.3395, 39.9373],
-        '北京植物园': [116.2066, 40.0063],
-        '香山公园': [116.1938, 39.9911],
-        '奥林匹克公园': [116.3911, 40.0133],
-        '鸟巢': [116.3979, 39.9928],
-        '水立方': [116.3895, 39.9934],
-        '国家大剧院': [116.3918, 39.9037],
-        '央视总部大楼': [116.4588, 39.9138],
-        '三里屯太古里': [116.4472, 39.9376],
-        '清华园': [116.3267, 40.0044],
-        '北大西门': [116.3059, 39.9993],
-        '明十三陵-定陵': [116.2356, 40.2925],
-        '慕田峪长城': [116.5706, 40.4370],
-        '古北水镇': [117.0262, 40.6521],
-        '北京欢乐谷': [116.4888, 39.9973]   // 以后可继续追加
-      }
-
-      // 2. 收集需要地理编码的项
-      const needGeo = []        // 要请求的 {name, idx}
-      this.dayItems.forEach((it, idx) => {
-        if (it.lnglat || coordMap[it.name]) return   // 已有坐标或本地表命中
-        needGeo.push({ name: it.name, idx })
-      })
-
-      // 3. 真正去高德查经纬度
-      if (needGeo.length) {
-        const geocoder = new AMap.Geocoder({ city: '北京' })
-        Promise.all(
-          needGeo.map(
-            ({ name, idx }) =>
-              new Promise(resolve => {
-                geocoder.getLocation(name, (status, result) => {
-                  if (status === 'complete' && result.geocodes.length) {
-                    const loc = result.geocodes[0].location
-                    this.dayItems[idx].lnglat = [loc.lng, loc.lat]
-                  } else {
-                    // 实在搜不到再回天安门的兜底
-                    this.dayItems[idx].lnglat = [116.397428, 39.90923]
-                  }
-                  resolve()
-                })
-              })
-          )
-        )
-      }
-
-      // 4. 现在所有 dayItems 都有 lnglat 了，按老逻辑画点/线
-      const coords = this.dayItems.map((it, idx) => ({
-        name: it.name,
-        lnglat: it.lnglat || coordMap[it.name], // 本地表兜底
-        idx
-      }))
-
-      coords.forEach(({ name, lnglat, idx }) => {
-        const marker = new AMap.Marker({
-          position: new AMap.LngLat(...lnglat),
-          title: `${idx + 1}. ${name}`,
-          label: { content: `${idx + 1}`, direction: 'center' }
+          /* ===== 1. 输入提示 ===== */
+      AMap.plugin('AMap.AutoComplete', () => {
+        const auto = new AMap.AutoComplete({
+          input: 'poiInput',   // 对应上面 input 的 id
+          city: ''
         })
-        this.markers.push(marker)
-      })
-      this.map.add(this.markers)
-
-      this.polyline = new AMap.Polyline({
-        path: coords.map(i => i.lnglat),
-        strokeColor: '#6262f3',
-        strokeWeight: 5,
-        strokeOpacity: 0.8,
-        lineJoin: 'round'
-      })
-      this.map.add(this.polyline)
-
-      this.map.setFitView([...this.markers, this.polyline], false, [40, 40, 40, 40])
-    },
-
-    /* 3. 以后每次增删改 dayItems 后重新绘制 */
-    refreshMap() {
-      this.drawRoute()
-    },
-
-    // initAutoComplete() {
-      // AMap.plugin('AMap.AutoComplete', () => {
-        // this.autoComplete = new AMap.AutoComplete({
-          // input: 'amap-input',   // ✅ 字符串 id
-          // city: '北京'
-        // })
-      // 
-        // this.autoComplete.on('select', e => {
-          // const poi = e.poi
-          // this.selectedItem.name = poi.name
-        // 
-          // if (poi.location) {
-            // this.selectedItem.lnglat = [
-              // poi.location.lng,
-              // poi.location.lat
-            // ]
-          // }
-        // 
-          // this.refreshMap()
-        // })
-      // })
-    // },
-    initAutoComplete() {
-      if (this.autoComplete) return
-
-      AMap.plugin(['AMap.Autocomplete', 'AMap.PlaceSearch'], () => {
-        this.autoComplete = new AMap.Autocomplete({
-          input: 'tipInput',
-          city: '北京'
-        })
-      
-        this.autoComplete.on('select', e => {
+        // 用户选中一条结果
+        auto.on('select', (e) => {
           const poi = e.poi
-          console.log('选中 POI:', poi)
-        
+          if (!poi || !this.selectedItem) return
+          this.selectedItem.name = poi.name
+          // 立即拿坐标
           if (poi.location) {
-            // 设置输入框
-            this.inputSearchVal = poi.name
-          
-            // 地图居中
-            this.map.setCenter(poi.location)
-          
-            // 示例：加一个 marker
-            const marker = new AMap.Marker({
-              position: poi.location
+            this.selectedItem.lnglat = [poi.location.lng, poi.location.lat]
+            this.map.setCenter(poi.location)   // 可选：地图飞过去
+            this.refreshMap()                  // 重画路线
+          } else {
+            // 个别 POI 没有即时坐标，再补一次地理编码
+            this.getLocationByName(poi.name).then(ll => {
+              this.selectedItem.lnglat = ll
+              this.refreshMap()
             })
-            this.map.add(marker)
           }
         })
+      })
+    
+      /* ===== 2. 其余你原来的代码 ===== */
+      this.geocoder = new AMap.Geocoder({ city: '' })
+      // 初始化地理编码器
+      this.geocoder = new AMap.Geocoder({ 
+        city: '',
+        radius: 1000
+      })
       
+      // 初始化PlaceSearch（用于自动补全）
+      this.initPlaceSearch()
+    },
+    
+    /* 2. 初始化PlaceSearch */
+    initPlaceSearch() {
+      AMap.plugin(['AMap.PlaceSearch'], () => {
         this.placeSearch = new AMap.PlaceSearch({
-          city: '北京',
-          map: this.map
+          city: '',
+          pageSize: 10,
+          map: this.map, // 重要：传递map实例
+          panel: 'search-result' // 可选：指定结果显示容器
         })
       })
     },
 
+    /* 3. 获取地点坐标（核心方法） */
+    async getLocationByName(name) {
+      if (!name || !this.geocoder) {
+        console.warn('地点名称为空或地理编码器未初始化')
+        return null
+      }
+      
+      return new Promise((resolve) => {
+        this.geocoder.getLocation(name, (status, result) => {
+          console.log('地理编码结果:', status, result)
+          if (status === 'complete' && result.geocodes && result.geocodes.length > 0) {
+            const loc = result.geocodes[0].location
+            resolve([loc.lng, loc.lat])
+          } else {
+            console.warn(`无法获取"${name}"的坐标，使用默认坐标`)
+            // 默认坐标
+            resolve([104.195397, 35.86166])
+          }
+        })
+      })
+    },
 
+    /* 4. 绘制路线 */
+    async drawRoute() {
+      console.log('开始绘制路线，dayItems:', this.dayItems)
+      
+      if (!this.map) {
+        console.warn('地图未初始化')
+        return
+      }
+
+      // 清空之前的标记
+      this.map.remove(this.markers)
+      this.markers = []
+      if (this.polyline) {
+        this.map.remove(this.polyline)
+        this.polyline = null
+      }
+
+      // 如果没有地点，直接返回
+      if (!this.dayItems || this.dayItems.length === 0) {
+        console.log('没有行程项可绘制')
+        return
+      }
+
+      const validCoords = []
+      
+      try {
+        // 获取所有地点的坐标
+        for (let i = 0; i < this.dayItems.length; i++) {
+          const item = this.dayItems[i]
+          console.log(`处理第 ${i+1} 个地点:`, item.name)
+          
+          let lnglat = null
+          
+          // 如果已有坐标，直接使用
+          if (item.lnglat && Array.isArray(item.lnglat) && item.lnglat.length === 2) {
+            lnglat = item.lnglat
+            console.log(`使用现有坐标:`, lnglat)
+          } else if (item.name) {
+            // 没有坐标，则获取坐标
+            console.log(`获取"${item.name}"的坐标...`)
+            lnglat = await this.getLocationByName(item.name)
+            if (lnglat) {
+              // 更新item的坐标
+              this.$set(this.dayItems[i], 'lnglat', lnglat)
+              console.log(`获取到坐标:`, lnglat)
+            }
+          }
+          
+          if (lnglat) {
+            validCoords.push({
+              name: item.name,
+              lnglat: lnglat,
+              idx: i
+            })
+          }
+        }
+
+        console.log('有效坐标:', validCoords)
+
+        // 如果没有有效的坐标，直接返回
+        if (validCoords.length === 0) {
+          console.warn('没有有效的坐标')
+          return
+        }
+
+        // 添加标记
+        validCoords.forEach(({ name, lnglat, idx }) => {
+          try {
+            const marker = new AMap.Marker({
+              position: new AMap.LngLat(lnglat[0], lnglat[1]),
+              title: `${idx + 1}. ${name}`,
+              label: { 
+                content: `${idx + 1}`, 
+                direction: 'center',
+                offset: new AMap.Pixel(0, 0)
+              }
+            })
+            this.markers.push(marker)
+            this.map.add(marker)
+          } catch (error) {
+            console.error('创建标记失败:', error)
+          }
+        })
+
+        // 绘制路线（至少两个点）
+        if (validCoords.length > 1) {
+          try {
+            this.polyline = new AMap.Polyline({
+              path: validCoords.map(i => i.lnglat),
+              strokeColor: '#6262f3',
+              strokeWeight: 5,
+              strokeOpacity: 0.8,
+              lineJoin: 'round'
+            })
+            this.map.add(this.polyline)
+          } catch (error) {
+            console.error('绘制路线失败:', error)
+          }
+        }
+
+        // 调整视野
+        try {
+          const mapObjects = [...this.markers]
+          if (this.polyline) mapObjects.push(this.polyline)
+          
+          if (mapObjects.length > 0) {
+            this.map.setFitView(mapObjects, false, [60, 60, 60, 60])
+          }
+        } catch (error) {
+          console.error('调整视野失败:', error)
+        }
+        
+        console.log('路线绘制完成')
+      } catch (error) {
+        console.error('绘制路线过程中出错:', error)
+      }
+    },
+
+    /* 6. 核心操作 - 保存行程项 */
+    async saveItem() {
+      console.log('开始保存行程项:', this.selectedItem)
+      
+      if (!this.selectedItem) {
+        console.warn('没有选中的行程项')
+        return
+      }
+
+      try {
+        this.loading = true
+
+        // 如果名称有变化但没有坐标，则获取坐标
+        if (this.selectedItem.name && this.selectedItem.name.trim() !== '' && 
+            (!this.selectedItem.lnglat || !Array.isArray(this.selectedItem.lnglat))) {
+          console.log(`获取"${this.selectedItem.name}"的坐标...`)
+          const lnglat = await this.getLocationByName(this.selectedItem.name)
+          if (lnglat) {
+            this.selectedItem.lnglat = lnglat
+            console.log('获取到坐标:', lnglat)
+          }
+        }
+
+        // 更新dayItems
+        const idx = this.dayItems.findIndex(i => i.id === this.selectedItem.id)
+        if (idx > -1) {
+          // 使用Vue.set确保响应式更新
+          this.dayItems[idx] = { ...this.selectedItem }
+        }
+
+        // 刷新地图
+        await this.drawRoute()
+
+        // 更新保存时间
+        this.lastSaved = new Date().toLocaleString()
+
+        // 提示
+        if (this.$message) {
+          this.$message.success('已保存')
+        } else {
+          console.log('已保存')
+        }
+        
+        console.log('保存完成')
+      } catch (error) {
+        console.error('保存失败:', error)
+        if (this.$message) {
+          this.$message.error('保存失败: ' + error.message)
+        }
+      } finally {
+        this.loading = false
+      }
+    },
+
+    /* 7. 其他方法（保持不变） */
     saveTrip() {
       this.lastSaved = new Date().toLocaleString()
       console.log('保存行程')
     },
+    
     shareTrip() {
       console.log('分享行程')
     },
-    openSettings() {
-      console.log('打开设置')
-    },
+    
     addNewItem() {
       const newId = `item${Date.now()}`
-      this.dayItems.push({ id: newId, name: '', time: '', note: '', priority: '低' })
-    },
-    addNewDay() {
-      // 1. 天数 +1
-      this.tripDays += 1
-
-      // 2. 自动切换到最后一天（可选）
-      this.currentDay = this.tripDays
-
-      // 3. 为新的一天准备空数组（若 dayItems 是按天分的对象/数组）
-      //    这里假设你只有一份 dayItems，想新建可再 push 空数组
-      //    如果 dayItems 已经是“按天”结构，请按你数据结构 push
-      // 示例：dayItems 空数组，用户后续再添加具体项
-      // this.dayItems.push([])   // 若 dayItems 是二维数组
-
-      // 4. 可选：滚动到底部
-      this.$nextTick(() => {
-      const list = this.$el.querySelector('.items-list')
-      if (list) list.scrollTop = list.scrollHeight
+      this.dayItems.push({ 
+        id: newId, 
+        name: '', 
+        time: '', 
+        note: '', 
+        priority: '低',
+        lnglat: null
       })
     },
+    
+    addNewDay() {
+      this.tripDays += 1
+      this.currentDay = this.tripDays
+      this.$nextTick(() => {
+        const list = this.$el.querySelector('.items-list')
+        if (list) list.scrollTop = list.scrollHeight
+      })
+    },
+    
     onDeleteDay(index) {
-      // 至少留 1 天
       if (this.tripDays <= 1) return
 
       this.$confirm(`确定删除第 ${index + 1} 天？`, '提示', {
@@ -484,88 +548,74 @@ export default {
         type: 'warning'
       }).then(() => {
         this.tripDays -= 1
-        // 如果当前正在删除这一天，就切到前一天
         if (this.currentDay === index + 1) {
           this.currentDay = Math.max(1, index)
         } else if (this.currentDay > index + 1) {
-        // 删除的是前面的天，当前 day 序号-1
           this.currentDay -= 1
         }
-       }).catch(() => {})
+      }).catch(() => {})
     },
+    
     selectItem(item) { 
       this.selectedItem = item
-
-      if (!this.autoComplete) {
-        this.$nextTick(() => {
-          this.initAutoComplete()
-        })
-      }
     },
-    saveItem() {
-      if (!this.selectedItem) return;
-
-      // 1. 写回 dayItems
-      const idx = this.dayItems.findIndex(i => i.id === this.selectedItem.id);
-      if (idx > -1) this.dayItems.splice(idx, 1, { ...this.selectedItem });
-
-      // 2. 刷新地图
-      this.refreshMap();
-
-      // 3. 更新保存时间
-      
-      this.lastSaved = new Date().toLocaleString();
-
-      // 4. 用户提示
-      this.$message?.success?.('已保存') || console.log('已保存');
-    },
-    removeItem() {
+    
+    async removeItem() {
       this.dayItems = this.dayItems.filter(i => i.id !== this.selectedItem.id)
       this.selectedItem = null
-      this.refreshMap()          // <-- 重绘
-      
+      await this.drawRoute()
     },
+    
     markVisited() {
       console.log('打卡 / 完成', this.selectedItem)
     },
+    
     zoomIn() {
-      console.log('地图放大')
+      this.map?.zoomIn()
     },
+    
     zoomOut() {
-      console.log('地图缩小')
+      this.map?.zoomOut()
     },
+    
     fitBounds() {
-      console.log('地图自适应')
+      if (this.markers.length > 0) {
+        this.map.setFitView(this.markers, false, [40, 40, 40, 40])
+      }
     },
+    
     optimizeRoute() {
       console.log('优化路线')
     },
+    
     onCalendarDateClick(arg) {
       this.selectedDate = arg.dateStr
       console.log('点击日历日期：', arg.dateStr)
     },
-    onPlaceAdded(place) {
+    
+    async onPlaceAdded(place) {
       const newItem = {
         id: 'p' + Date.now(),
         name: place.name,
         time: '',
         note: place.description,
-        priority: '中'
+        priority: '中',
+        lnglat: place.lnglat
       }
       this.dayItems.push(newItem)
       this.showPlaceSearch = false
-      this.refreshMap()          // <-- 重绘
-      
+      await this.drawRoute()
     },
+    
     handleExported(exportResult) {
       console.log('收到导出结果：', exportResult)
-      // 如果需要关闭弹窗可以设 exportVisible = false
       this.exportVisible = false
     }
   }
 }
 </script>
 
+<!-- 样式保持不变 -->
 <style scoped>
 @font-face {
   font-family: 'Mantou';
@@ -971,8 +1021,14 @@ export default {
   color: #000003;
 }
 
+.el-form-item__content input {
+  border-color: #d9f3fa;
 
-
+}
+#poiInput:focus {
+  border-color: #eaeafa;         /* 换成你想要的颜色 */
+  box-shadow: 0 0 4px 0 #dedeeb; /* 可选：光晕 */
+}
 
 
 </style>
