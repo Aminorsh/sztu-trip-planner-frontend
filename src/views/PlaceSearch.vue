@@ -9,29 +9,33 @@
           </div>
           <div class="modal-body">
             <div class="search-header">
-              <el-input
+              <el-autocomplete
                 v-model="keyword"
                 placeholder="搜索地点"
                 clearable
                 class="search-input"
+                :fetch-suggestions="querySearchAsync"
+                :teleported="false"
+                popper-class="place-autocomplete-popper"
                 @clear="onSearch"
                 @keyup.enter="onSearch"
+                @select="onSearch"
               >
                 <template #prefix>
                   <el-icon><Search /></el-icon>
                 </template>
-              </el-input>
-              <el-select v-model="filterType" placeholder="类别" class="filter-select" @change="onFilterChange">
-                <el-option label="全部" value=""></el-option>
-                <el-option label="景点" value="scenic"></el-option>
-                <el-option label="餐饮" value="restaurant"></el-option>
-                <el-option label="酒店" value="hotel"></el-option>
-              </el-select>
-              <el-select v-model="sortOrder" placeholder="排序" class="sort-select" @change="onSortChange">
-                <el-option label="距离" value="distance"></el-option>
-                <el-option label="评分" value="rating"></el-option>
-                <el-option label="热门" value="popularity"></el-option>
-              </el-select>
+              </el-autocomplete>
+              <!-- <el-select v-model="filterType" placeholder="类别" class="filter-select" @change="onFilterChange"> -->
+                <!-- <el-option label="全部" value=""></el-option> -->
+                <!-- <el-option label="景点" value="scenic"></el-option> -->
+                <!-- <el-option label="餐饮" value="restaurant"></el-option> -->
+                <!-- <el-option label="酒店" value="hotel"></el-option> -->
+              <!-- </el-select> -->
+              <!-- <el-select v-model="sortOrder" placeholder="排序" class="sort-select" @change="onSortChange"> -->
+                <!-- <el-option label="距离" value="distance"></el-option> -->
+                <!-- <el-option label="评分" value="rating"></el-option> -->
+                <!-- <el-option label="热门" value="popularity"></el-option> -->
+              <!-- </el-select> -->
             </div>
             <div class="results-list">
               <div v-for="place in places" :key="place.id" class="place-card">
@@ -70,7 +74,40 @@
 
 <script>
 import { Search } from '@element-plus/icons-vue'
-import heroTravel from '@/assets/images/14.jpg'
+import heroTravel from '@/assets/images/1.jpg'
+import heroTravel2 from '@/assets/images/2.jpg'
+import heroTravel3 from '@/assets/images/3.jpg'
+import heroTravel4 from '@/assets/images/4.jpg'
+import heroTravel5 from '@/assets/images/5.jpg'
+import heroTravel6 from '@/assets/images/6.jpg'
+import heroTravel7 from '@/assets/images/7.jpg'
+import heroTravel8 from '@/assets/images/8.jpg'
+import heroTravel9 from '@/assets/images/9.jpg'
+import heroTravel10 from '@/assets/images/10.jpg'
+import heroTravel11 from '@/assets/images/11.jpg'
+import heroTravel12 from '@/assets/images/12.jpg'
+import heroTravel13 from '@/assets/images/13.jpg'
+import axios from 'axios'
+
+// 高德 key
+const AMAP_KEY = 'ca55a345ea12a37b1e00830ee7f62380'
+// inputtips 接口
+const INPUTTIPS_URL = 'https://restapi.amap.com/v3/assistant/inputtips'
+const IMAGE_POOL = [
+  heroTravel,
+  heroTravel2,
+  heroTravel3,
+  heroTravel4,
+  heroTravel5,
+  heroTravel6,
+  heroTravel7,
+  heroTravel8,
+  heroTravel9,
+  heroTravel10,
+  heroTravel11,
+  heroTravel12,
+  heroTravel13
+]
 
 export default {
   name: 'PlaceSearch',
@@ -82,6 +119,7 @@ export default {
       default: () => []
     }
   },
+  
   data() {
     return {
       visible: true,
@@ -89,43 +127,114 @@ export default {
       filterType: '',
       sortOrder: '',
       places: [],
-      defaultImage: heroTravel,
       debounceTimer: null
     }
   },
   methods: {
+    getImageById(id) {
+      const str = id.toString()
+      let hash = 0
+      for (let i = 0; i < str.length; i++) {
+        hash += str.charCodeAt(i)
+      }
+      return IMAGE_POOL[hash % IMAGE_POOL.length]
+    },
+    async fetchPlaces() {
+      if (!this.keyword.trim()) {
+        this.places = []
+        return
+      }
+    
+      const res = await axios.get(
+        'https://restapi.amap.com/v3/place/text',
+        {
+          params: {
+            key: AMAP_KEY,
+            keywords: this.keyword,
+            city: '北京',
+            citylimit: true,
+            types: this.filterType === 'scenic'
+              ? '110000|110100' // 风景名胜（可不填）
+              : '',
+            extensions: 'base',
+            offset: 10,
+            page: 1
+          }
+        }
+      )
+      
+      if (res.data.status !== '1') {
+        this.places = []
+        return
+      }
+    
+      this.places = res.data.pois.map(poi => {
+        const [lng, lat] = poi.location
+          ? poi.location.split(',').map(Number)
+          : []
+      
+        return {
+          id: poi.id,
+          name: poi.name,
+          address: poi.address,
+          description: poi.type,
+          image: this.getImageById(poi.id), // ⭐ 随机图
+          rating: poi.biz_ext?.rating || '暂无',
+          distance: poi.distance ? (poi.distance / 1000).toFixed(2) : null,
+          openingHours: poi.opening_hours || '以现场为准',
+          lnglat: [lng, lat],
+          added: this.existingPlaceIds.includes(poi.id),
+          expanded: false
+        }
+      })
+    },
+    // 把原来的 axios 请求换成 JSONP
+    querySearchAsync(queryStr, cb) {
+      if (!queryStr || !queryStr.trim()) { cb([]); return }
+
+      // 清理上一次脚本
+      if (this._script) {
+        document.head.removeChild(this._script)
+        delete this._script
+      }
+      // 全局回调名每次随机，防止并发覆盖
+      const cbName = '_mapCb' + Date.now()
+      window[cbName] = (data) => {
+        console.log('高德 tips 返回', data) 
+        // 容错
+        const sugs = (data.status === '1' && data.tips
+          ? data.tips.map(t => ({ value: t.name }))
+          : [])
+          console.log('准备喂给 el-autocomplete 的数组', sugs) 
+        cb(sugs)
+        // 清场
+        if (this._script) {
+          document.head.removeChild(this._script)
+          delete this._script
+        }
+        delete window[cbName]
+      }
+
+      this._script = document.createElement('script')
+      this._script.src = `${INPUTTIPS_URL}?key=${AMAP_KEY}&keywords=${encodeURIComponent(
+        queryStr.trim()
+      )}&city=北京&datatype=all&callback=${cbName}`
+      document.head.appendChild(this._script)
+    },
     onSearch() {
       if (this.debounceTimer) clearTimeout(this.debounceTimer)
       this.debounceTimer = setTimeout(() => {
         this.fetchPlaces()
       }, 400)
     },
+    
     onFilterChange() {
       this.onSearch()
     },
     onSortChange() {
       this.onSearch()
     },
-    fetchPlaces() {
-      const sample = [
-        { id: 'p1',  name: '天安门广场',       address: '东城区天安门广场',        description: '祖国心脏，升旗仪式必看。',         image: heroTravel, rating: 4.7, distance: 0, openingHours: '05:00-22:00', added: this.existingPlaceIds.includes('p1'), expanded: false, lnglat: [116.397428, 39.90923] },
-        { id: 'p2',  name: '故宫博物院',       address: '东城区景山前街4号',        description: '世界最大古代宫殿群，震撼到脚软。', image: heroTravel, rating: 4.9, distance: 0, openingHours: '08:30-17:00', added: this.existingPlaceIds.includes('p2'), expanded: false, lnglat: [116.397731, 39.916485] },
-        { id: 'p3',  name: '景山公园',         address: '西城区景山西街44号',       description: '登顶万春楼，俯瞰紫禁城全景。',      image: heroTravel, rating: 4.6, distance: 0, openingHours: '06:30-20:00', added: this.existingPlaceIds.includes('p3'), expanded: false, lnglat: [116.391467, 39.925929] },
-        { id: 'p4',  name: '王府井步行街',     address: '东城区王府井大街',         description: '百年商业街，小吃+伴手礼一站搞定。', image: heroTravel, rating: 4.5, distance: 0, openingHours: '10:00-22:00', added: this.existingPlaceIds.includes('p4'), expanded: false, lnglat: [116.413384, 39.913312] },
-        { id: 'p5',  name: '北海公园',         address: '西城区文津街1号',          description: '皇家园林+白塔倒影，划船超浪漫。',   image: heroTravel, rating: 4.6, distance: 0, openingHours: '06:00-21:00', added: this.existingPlaceIds.includes('p5'), expanded: false, lnglat: [116.3887, 39.9242] },
-        { id: 'p6',  name: '什刹海',           address: '西城区什刹海地区',         description: '胡同+酒吧+三轮车，老北京夜生活首选。', image: heroTravel, rating: 4.4, distance: 0, openingHours: '全天', added: this.existingPlaceIds.includes('p6'), expanded: false, lnglat: [116.3867, 39.9413] },
-        { id: 'p7',  name: '南锣鼓巷',         address: '东城区南锣鼓巷',           description: '网红胡同，文创小店吃到扶墙。',        image: heroTravel, rating: 4.3, distance: 0, openingHours: '全天', added: this.existingPlaceIds.includes('p7'), expanded: false, lnglat: [116.4030, 39.9376] },
-        { id: 'p8',  name: '雍和宫',           address: '东城区雍和宫大街12号',     description: '皇家喇嘛庙，香火旺到怀疑人生。',     image: heroTravel, rating: 4.7, distance: 0, openingHours: '09:00-16:30', added: this.existingPlaceIds.includes('p8'), expanded: false, lnglat: [116.4182, 39.9479] },
-        { id: 'p9',  name: '鸟巢/水立方',      address: '朝阳区国家体育场南路1号', description: '奥运地标，夜景拍照无敌。',           image: heroTravel, rating: 4.5, distance: 0, openingHours: '09:00-21:00', added: this.existingPlaceIds.includes('p9'), expanded: false, lnglat: [116.3979, 39.9928] },
-        { id: 'p10', name: '颐和园',           address: '海淀区新建宫门路19号',     description: '皇家园林天花板，长廊+昆明湖美炸。',   image: heroTravel, rating: 4.8, distance: 0, openingHours: '06:30-18:00', added: this.existingPlaceIds.includes('p10'), expanded: false, lnglat: [116.2756, 39.9998] },
-        { id: 'p11', name: '圆明园',           address: '海淀区清华西路28号',       description: '万园之园遗址，历史感拉满。',          image: heroTravel, rating: 4.4, distance: 0, openingHours: '07:00-19:30', added: this.existingPlaceIds.includes('p11'), expanded: false, lnglat: [116.3016, 40.0081] },
-        { id: 'p12', name: '香山公园',         address: '海淀区买卖街40号',         description: '红叶圣地，秋天美成油画。',            image: heroTravel, rating: 4.6, distance: 0, openingHours: '06:00-18:00', added: this.existingPlaceIds.includes('p12'), expanded: false, lnglat: [116.1938, 39.9911] },
-        { id: 'p13', name: '北京动物园',       address: '西城区西直门外大街137号',  description: '看熊猫宝宝打滚，萌化少女心。',        image: heroTravel, rating: 4.3, distance: 0, openingHours: '07:30-18:00', added: this.existingPlaceIds.includes('p13'), expanded: false, lnglat: [116.3395, 39.9373] },
-        { id: 'p14', name: '前门大街',         address: '东城区前门大街',           description: '复古铛铛车+北京烤鸭，一次体验两种京味。', image: heroTravel, rating: 4.4, distance: 0, openingHours: '全天', added: this.existingPlaceIds.includes('p14'), expanded: false, lnglat: [116.3986, 39.9043] },
-        { id: 'p15', name: '天坛公园',         address: '东城区天坛路甲1号',        description: '明清皇帝祭天圣地，回音壁必打卡。',    image: heroTravel, rating: 4.7, distance: 0, openingHours: '06:00-22:00', added: this.existingPlaceIds.includes('p15'), expanded: false, lnglat: [116.407394, 39.88329] }
-      ];
-      this.places = sample
-    },
+    // },
     toggleExpand(place) {
       place.expanded = !place.expanded
     },
@@ -333,5 +442,34 @@ export default {
   font-family: Mantou;
   color:#a85e5e;
   font-size: 1.1rem;
+}
+
+/* 1. 让弹窗本身不再裁掉超出部分 */
+.modal-container {
+  overflow: visible;          /* 关键：去掉 hidden */
+}
+
+.place-autocomplete-popper {
+  z-index: 20000;
+}
+/* 3. 如果下拉面板宽度比输入框窄，可手动对齐 */
+.el-autocomplete-suggestion {
+  min-width: 360px !important; /* 按需调，和你的搜索框一样宽即可 */
+}
+
+/* 4. 兼容小屏：面板最大高度 + 内部滚动 */
+.el-autocomplete-suggestion__wrap {
+  max-height: 320px !important;
+  overflow-y: auto !important;
+}
+
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
 }
 </style>

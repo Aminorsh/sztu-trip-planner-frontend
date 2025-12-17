@@ -30,6 +30,11 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           rewrite: path => path.replace(/^\/api/, ''),
         },
+        '/amap': {
+          target: 'https://restapi.amap.com',
+          changeOrigin: true,
+          rewrite: path => path.replace(/^\/amap/, '')
+        }
       },
     },
     resolve: {
