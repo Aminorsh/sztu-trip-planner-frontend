@@ -12,7 +12,7 @@
           <span class="trip-status">{{ trip.status }}</span>
         </div>
         <div class="header-right">
-          <el-button size="mini" @click="saveTrip">保存</el-button>
+          <!-- <el-button size="mini" @click="saveTrip">保存</el-button> -->
           <el-button size="mini" @click="shareTrip">分享</el-button>
           <el-button size="mini" @click="exportVisible = true">导出</el-button>
           <el-button size="mini" @click="showPlaceSearch = true">添加地点</el-button>
@@ -139,10 +139,13 @@
                   删除
                 </el-button>
               </el-form-item>
-              <el-form-item>
-                <el-button size="small" type="success" @click="markVisited">
-                  打卡 / 完成
-                </el-button>
+              <el-form-item label="打卡状态">
+                  <el-switch
+                    v-model="selectedItem.visited"
+                    active-text="已打卡"
+                    inactive-text="未打卡"
+                    @change="onVisitedChange"
+                  />
               </el-form-item>
             </el-form>
           </div>
@@ -207,10 +210,10 @@ export default {
       tripDays: 5,
       currentDay: 2,
       dayItems: [
-        { id: 'b1-1', name: '天安门广场',   time: '08:00', note: '升旗仪式，建议提前 30 min 到', priority: '高', lnglat: [116.397428, 39.90923] },
-        { id: 'b1-2', name: '故宫博物院',   time: '09:30', note: '提前网上购票，午门进神武门出', priority: '高', lnglat: [116.397731, 39.916485] },
-        { id: 'b1-3', name: '景山公园',     time: '14:00', note: '登顶万春楼俯瞰紫禁城全景', priority: '中', lnglat: [116.391467, 39.925929] },
-        { id: 'b1-4', name: '王府井步行街', time: '17:30', note: '老字号小吃+伴手礼', priority: '低', lnglat: [116.413384, 39.913312] }
+        { id: 'b1-1', name: '天安门广场',   time: '08:00', note: '升旗仪式，建议提前 30 min 到', visited: false,priority: 'high', lnglat: [116.397428, 39.90923] },
+        { id: 'b1-2', name: '故宫博物院',   time: '09:30', note: '提前网上购票，午门进神武门出', visited: false,priority: 'high', lnglat: [116.397731, 39.916485] },
+        { id: 'b1-3', name: '景山公园',     time: '14:00', note: '登顶万春楼俯瞰紫禁城全景', visited: false,priority: 'medium', lnglat: [116.391467, 39.925929] },
+        { id: 'b1-4', name: '王府井步行街', time: '17:30', note: '老字号小吃+伴手礼', visited: false,priority: 'low', lnglat: [116.413384, 39.913312] }
       ],
       selectedItem: null,
       lastSaved: new Date().toLocaleString(),
@@ -388,20 +391,52 @@ export default {
       if (validCoords.length === 0) return
     
       // 添加标记
+      // 只创建一个全局 InfoWindow
+      if (!this.infoWindow) {
+        this.infoWindow = new AMap.InfoWindow({
+          offset: new AMap.Pixel(0, -35)
+        })
+      }
+
       validCoords.forEach(({ name, lnglat, idx }) => {
+        const item = this.dayItems[idx]
+      
         const marker = new AMap.Marker({
           position: new AMap.LngLat(lnglat[0], lnglat[1]),
           title: `${idx + 1}. ${name}`,
           label: {
             content: `${idx + 1}`,
-            direction: 'center',
-            offset: new AMap.Pixel(0, 0)
+            direction: 'center'
           }
         })
+      
+        // ⭐ 点击 marker 显示 InfoWindow
+        marker.on('click', () => {
+          const priorityMap = {
+            high: '高',
+            medium: '中',
+            low: '低'
+          }
+        
+          const infoHtml = `
+            <div style="padding:10px;max-width:220px;font-size:14px;">
+              <h3 style="margin:0 0 6px 0;">${idx + 1}. ${item.name}</h3>
+              <p><b>时间：</b>${item.time || '--'}</p>
+              <p><b>优先级：</b>${priorityMap[item.priority] || '--'}</p>
+              <p><b>状态：</b>${item.visited ? '已打卡' : '未打卡'}</p>
+              <p><b>备注：</b>${item.note || '--'}</p>
+            </div>
+          `
+          
+          this.infoWindow.setContent(infoHtml)
+          this.infoWindow.open(this.map, marker.getPosition())
+        })
+      
         this.markers.push(marker)
         this.map.add(marker)
       })
-    
+
+
       // 绘制分段路线
       if (validCoords.length > 1) {
         const segments = []
@@ -452,6 +487,7 @@ export default {
       if (mapObjects.length > 0) this.map.setFitView(mapObjects, false, [60, 60, 60, 60])
     
       console.log('路线绘制完成')
+
     },
     async planRouteWithWalking(coords) {
         return new Promise((resolve, reject) => {
@@ -581,6 +617,16 @@ export default {
         this.selectedItem.lnglat = lnglat
         await this.drawRoute()
       },
+    onVisitedChange(val) {
+      if (!this.selectedItem) return
+      const idx = this.dayItems.findIndex(i => i.id === this.selectedItem.id)
+      if (idx > -1) {
+        this.dayItems.splice(idx, 1, { ...this.selectedItem })
+      }
+    
+      // ⭐ 重新绘制地图（InfoWindow 内容才会更新）
+      this.drawRoute()
+    },
 
 
 
@@ -643,9 +689,6 @@ export default {
       await this.drawRoute()
     },
     
-    markVisited() {
-      console.log('打卡 / 完成', this.selectedItem)
-    },
     
     zoomIn() {
       this.map?.zoomIn()

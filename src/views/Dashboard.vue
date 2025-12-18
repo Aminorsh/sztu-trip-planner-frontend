@@ -162,9 +162,9 @@
                 <el-button size="mini" type="danger" @click="deleteTrip(trip.id)">
                   <el-icon><Delete /></el-icon>删除
                 </el-button>
-                <el-button size="mini" @click="shareTrip(trip.id)">
-                  <el-icon><Share /></el-icon>邀请
-                </el-button>
+                <!-- <el-button size="mini" @click="shareTrip(trip.id)"> -->
+                  <!-- <el-icon><Share /></el-icon>邀请 -->
+                <!-- </el-button> -->
               </div>
             </div>
           </div>
@@ -292,11 +292,8 @@ export default {
     goHome() {
       this.$router.push({ name: 'Home' })
     },
-    createNew() {
-      this.$router.push({ name: 'CreateTrip' })
-    },
-    viewTrip(id) {
-      this.$router.push({ name: 'TripDetail', params: { id } })
+    viewTrip(tripId) {
+      this.$router.push({ name: 'TripDetail', params: { tripId } })
     },
     editTrip(id) {
       this.$router.push({ name: 'EditTrip', params: { id } })
@@ -304,9 +301,9 @@ export default {
     deleteTrip(id) {
       this.trips = this.trips.filter(t => t.id !== id)
     },
-    shareTrip(id) {
-      this.$router.push({ name: 'ShareTrip', params: { id } })
-    },
+    // shareTrip(id) {
+    //   this.$router.push({ name: 'ShareTrip', params: { id } })
+    // },
     onSearch() {
       console.log('搜索关键字:', this.searchKey)
     },
