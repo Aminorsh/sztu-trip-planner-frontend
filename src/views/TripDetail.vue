@@ -191,6 +191,8 @@ import ExportPanel from './ExportPanel.vue'
 const AMAP_KEY = 'ca55a345ea12a37b1e00830ee7f62380'
 const INPUTTIPS_URL = 'https://restapi.amap.com/v3/assistant/inputtips'
 
+const ICON_RED   = 'https://webapi.amap.com/theme/v1.3/markers/n/mark_rs.png'
+const ICON_BLUE  = 'https://webapi.amap.com/theme/v1.3/markers/n/mark_bs.png'
 export default {
   name: 'TripDetail',
   components: {
@@ -400,14 +402,38 @@ export default {
 
       validCoords.forEach(({ name, lnglat, idx }) => {
         const item = this.dayItems[idx]
-      
+        const iconUrl = item.visited
+          ? ICON_RED   // 已打卡 → 红色
+          : ICON_BLUE    // 未打卡 → 蓝色
+
         const marker = new AMap.Marker({
           position: new AMap.LngLat(lnglat[0], lnglat[1]),
           title: `${idx + 1}. ${name}`,
-          label: {
-            content: `${idx + 1}`,
-            direction: 'center'
-          }
+          icon: iconUrl,
+          offset: new AMap.Pixel(-10, -34),
+          content: `
+            <div style="
+              position: relative;
+              width: 30px;
+              height: 42px;
+              background: url(${iconUrl}) no-repeat center / contain;
+            ">
+              <div style="
+                position: absolute;
+                top: 6px;
+                left: 0;
+                right: 0;
+                text-align: center;
+                color: #fff;
+                font-size: 13px;
+                font-weight: bold;
+                text-shadow: 0 0 3px rgba(0,0,0,0.6);
+                pointer-events: none;
+              ">
+                ${idx + 1}
+              </div>
+            </div>
+          `
         })
       
         // ⭐ 点击 marker 显示 InfoWindow
