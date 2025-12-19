@@ -151,8 +151,8 @@ export default {
           params: {
             key: AMAP_KEY,
             keywords: this.keyword,
-            city: '北京',
-            citylimit: true,
+            // city: '北京',
+            // citylimit: true,
             types: this.filterType === 'scenic'
               ? '110000|110100' // 风景名胜（可不填）
               : '',
@@ -218,7 +218,7 @@ export default {
       this._script = document.createElement('script')
       this._script.src = `${INPUTTIPS_URL}?key=${AMAP_KEY}&keywords=${encodeURIComponent(
         queryStr.trim()
-      )}&city=北京&datatype=all&callback=${cbName}`
+      )}&callback=${cbName}`
       document.head.appendChild(this._script)
     },
     onSearch() {
