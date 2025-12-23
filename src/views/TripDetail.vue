@@ -176,6 +176,50 @@
       @exported="handleExported"
     />
   </div>
+
+    <!-- 1. 悬浮球 -->
+  <div class="ai-float-btn" @click="openChat">
+    <el-icon size="24"><ChatDotRound /></el-icon>
+  </div>
+
+  <!-- 2. 聊天弹窗 -->
+  <teleport to="body">
+    <transition name="fade">
+      <div v-if="chatVisible" class="ai-mask" @click.self="closeChat">
+        <div class="ai-window" :style="{ left: winLeft + 'px', top: winTop + 'px' }">
+          <!-- 标题栏（可拖拽） -->
+          <div class="ai-header" @mousedown="onMouseDown">
+            <span class="ai-title">行程小助手</span>
+            <el-icon class="ai-close" @click="closeChat"><Close /></el-icon>
+          </div>
+
+          <!-- 消息区 -->
+          <div ref="chatBox" class="ai-body">
+            <div
+              v-for="(m, idx) in messages"
+              :key="idx"
+              :class="['ai-bubble', m.role]">
+              <div class="ai-content">{{ m.content }}</div>
+            </div>
+            <div v-if="replying" class="ai-bubble assistant">
+              <div class="ai-content">思考中…</div>
+            </div>
+          </div>
+
+          <!-- 输入区 -->
+          <div class="ai-footer">
+            <el-input
+              v-model="input"
+              placeholder="输入问题，按 Enter 发送"
+              :disabled="replying"
+              @keyup.enter="send"
+            />
+            <el-button type="primary" :loading="replying" @click="send">发送</el-button>
+          </div>
+        </div>
+      </div>
+    </transition>
+  </teleport>
 </template>
 <script>
 import draggable from 'vuedraggable'
@@ -188,6 +232,8 @@ import heroTravel3 from '@/assets/images/13.jpg'
 import heroTravel5 from '@/assets/images/19.jpg'
 import PlaceSearch from './PlaceSearch.vue'
 import ExportPanel from './ExportPanel.vue'
+import { ChatDotRound, Close } from '@element-plus/icons-vue'
+import apiClient from '@/services/apiClient'
 const AMAP_KEY = 'ca55a345ea12a37b1e00830ee7f62380'
 const INPUTTIPS_URL = 'https://restapi.amap.com/v3/assistant/inputtips'
 
@@ -199,7 +245,8 @@ export default {
     draggable,
     FullCalendar,
     PlaceSearch,
-    ExportPanel
+    ExportPanel,
+    draggable, FullCalendar, PlaceSearch, ExportPanel, ChatDotRound, Close
   },
   data() {
     return {
@@ -259,6 +306,13 @@ export default {
       placeSearch: null,
       loading: false, // 添加加载状态
       walking: null,
+      chatVisible: false,      // 弹窗显隐
+      input: '',               // 当前输入
+      messages: [],            // 历史消息 [{role:'user'|'assistant', content:'...'}]
+      replying: false,         // 正在等待接口返回
+      winLeft: 0, winTop: 0,   // 窗口定位
+      dragging: false,         // 是否正在拖拽
+      dragX: 0, dragY: 0       // 拖拽偏移
     }
   },
 
@@ -756,6 +810,146 @@ export default {
     handleExported(exportResult) {
       console.log('收到导出结果：', exportResult)
       this.exportVisible = false
+    },
+    openChat() {
+      this.chatVisible = true
+      // 初始化位置（居中）
+      this.winLeft = (window.innerWidth - 400) / 2
+      this.winTop = (window.innerHeight - 600) / 2
+      // 欢迎语
+      if (!this.messages.length) {
+        this.messages.push({
+          role: 'assistant',
+          content: '你好！我是行程小助手，可以帮你推荐附近好玩的、好吃的，或者调整路线。请问有什么需要？'
+        })
+      }
+      this.$nextTick(() => this.scrollBottom())
+
+    },
+    closeChat() {
+      this.chatVisible = false
+    },
+    async send() {
+  const q = this.input.trim()
+  if (!q || this.replying) return
+
+  // 用户消息入队
+  this.messages.push({ role: 'user', content: q })
+  this.input = ''
+  this.replying = true
+  this.$nextTick(() => this.scrollBottom())
+
+  // 添加生成中提示
+  const typingIndex = this.messages.push({ role: 'assistant', content: 'AI 正在生成中...' }) - 1
+  this.$nextTick(() => this.scrollBottom())
+
+  try {
+    console.log('即将请求 AI 接口:', '/v3/assistants/chat')
+    console.log('请求体 messages:', q)
+
+    // 发送请求，统一格式为数组对象
+    const res = await apiClient.post('/v3/assistants/chat', {
+      model: 'deepseek-chat',
+      messages: [{ role: 'user', content: q }],
+      stream: false
+    }, {
+      timeout: 60000 // 延长超时，支持长文本
+    })
+
+    const json = res.data
+    console.log('接口返回:', json)
+
+    // 移除生成中提示
+    this.messages.splice(typingIndex, 1)
+
+    if (json.success) {
+      this.messages.push({ role: 'assistant', content: json.data })
+    } else {
+      this.messages.push({
+        role: 'assistant',
+        content: '抱歉，出错了：' + (json.message || '未知错误')
+      })
+    }
+  } catch (e) {
+    console.error('请求失败:', e)
+    // 移除生成中提示
+    this.messages.splice(typingIndex, 1)
+
+    if (e.code === 'ECONNABORTED') {
+      this.messages.push({ role: 'assistant', content: '请求超时，请稍后再试' })
+    } else if (e.response && e.response.status === 400) {
+      this.messages.push({ role: 'assistant', content: '请求格式错误，请检查输入内容' })
+    } else if (e.response && e.response.status >= 500) {
+      this.messages.push({ role: 'assistant', content: '服务器内部错误，请稍后再试' })
+    } else {
+      this.messages.push({ role: 'assistant', content: '网络错误，请稍后再试' })
+    }
+  } finally {
+    this.replying = false
+    this.$nextTick(() => this.scrollBottom())
+  }
+},
+async send() {
+  const q = this.input.trim()
+  if (!q || this.replying) return
+
+  this.messages.push({ role: 'user', content: q })
+  this.input = ''
+  this.replying = true
+  this.$nextTick(() => this.scrollBottom())
+
+  try {
+    const res = await apiClient.post('/v3/assistants/chat', {
+      model: 'deepseek-chat',
+      messages: q,
+      stream: false
+    })
+    const content = res.data
+    console.log('接口返回内容:', content)
+
+    // 1. 先放一条空消息
+    const assistantMessage = { role: 'assistant', content: '' }
+    this.messages.push(assistantMessage)
+
+    // 2. 打字机：只改 content，不再 push
+    let i = 0
+    const timer = setInterval(() => {
+      if (i >= content.length) return clearInterval(timer)
+      assistantMessage.content += content.slice(i, i + 2)
+      i += 2
+      this.$nextTick(() => this.scrollBottom())
+    }, 30)
+  } catch (e) {
+    console.error(e)
+    this.messages.push({
+      role: 'assistant',
+      content: e.code === 'ECONNABORTED' ? '请求超时' : '网络错误，请稍后再试'
+    })
+  } finally {
+    this.replying = false
+    this.$nextTick(() => this.scrollBottom())
+  }
+},
+    scrollBottom() {
+      const box = this.$refs.chatBox
+      if (box) box.scrollTop = box.scrollHeight
+    },
+    onMouseDown(e) {
+      this.dragging = true
+      this.dragX = e.clientX - this.winLeft
+      this.dragY = e.clientY - this.winTop
+      const move = (ev) => {
+        if (!this.dragging) return
+        this.winLeft = ev.clientX - this.dragX
+        this.winTop = ev.clientY - this.dragY
+      }
+      const up = () => {
+        this.dragging = false
+        window.removeEventListener('mousemove', move)
+        window.removeEventListener('mouseup', up)
+      }
+      window.addEventListener('mousemove', move)
+      window.addEventListener('mouseup', up)
     }
   }
 }
@@ -1183,5 +1377,92 @@ export default {
   width: 100%;
 }
 
+/* 悬浮球 */
+.ai-float-btn{
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #16474a;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,.15);
+  z-index: 2000;
+  transition: transform .2s;
+}
+.ai-float-btn:hover{ transform: scale(1.1); }
 
+/* 遮罩 */
+.ai-mask{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.fade-enter-active, .fade-leave-active{ transition: opacity .2s; }
+.fade-enter-from, .fade-leave-to{ opacity: 0; }
+
+/* 聊天窗口 */
+.ai-window{
+  position: center;
+  width: 800px;
+  height: 600px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(124, 38, 38, 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.ai-header{
+  height: 48px;
+  background: #cedfe0;
+  color: #3b2f2f;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  cursor: move;
+  user-select: none;
+}
+.ai-title{ font-size: 16px; }
+.ai-close{ cursor: pointer; font-size: 20px; }
+
+/* 消息区 */
+.ai-body{
+  flex: 1;
+  padding: 12px 16px;
+  overflow-y: auto;
+  background: #ffffff;
+}
+.ai-bubble{ margin-bottom: 12px; display: flex; }
+.ai-bubble.user{ justify-content: flex-end; }
+.ai-bubble.assistant{ justify-content: flex-start; }
+.ai-content{
+  max-width: 70%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  line-height: 1.4;
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+.ai-bubble.user .ai-content{ background: #6eb8d4; color: #ffffff; }
+.ai-bubble.assistant .ai-content{ background: #cbe5f8; color: #6f9281; }
+
+/* 输入区 */
+.ai-footer{
+  display: flex;
+  padding: 12px;
+  border-top: 1px solid #fcfcfc;
+  background: #ffffff;
+}
+.ai-footer .el-input{ flex: 1; margin-right: 8px; }
 </style>

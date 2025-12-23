@@ -3,7 +3,7 @@ import axios from 'axios'
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,   // 后端 API 前缀
-  timeout: 10000
+  timeout: 6000000
 })
 
 // 请求拦截器：如果有 token，就在请求头里加上 Authorization
@@ -12,6 +12,7 @@ apiClient.interceptors.request.use(config => {
   if (token) {
     config.headers['Authorization'] = `Bearer ${token}`
   }
+  console.log('请求配置:', config)
   return config
 }, error => {
   return Promise.reject(error)

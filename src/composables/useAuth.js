@@ -33,9 +33,23 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     // 后端应返回 token（以及可选用户信息）
-    const t = response.token
+    // const t = response.token
+    // token.value = t
+    // localStorage.setItem('token', t)
+
+    const t =
+      response.token ||
+      response.data?.token ||
+      response.data?.access_token
+
+    if (!t) {
+      console.error('登录成功但未拿到 token，完整响应是：', response)
+      throw new Error('后端未返回 token')
+    }
+
     token.value = t
     localStorage.setItem('token', t)
+
 
     // 如果返回 user 信息，也存起来
     if (response.user) {
