@@ -1,0 +1,1 @@
+export const USE_MOCK = true; // true: 走Mock, false: 走真实API
