@@ -28,7 +28,7 @@ apiClient.interceptors.request.use(
 // 响应拦截器
 apiClient.interceptors.response.use(
   response => {
-    // 直接返回数据部分
+    // 保持完整的响应结构，包括success和data字段
     return response.data
   },
   error => {
@@ -47,7 +47,11 @@ apiClient.interceptors.response.use(
       const backendMessage = backendError?.message || response.data?.message
       const backendCode = backendError?.code
       const errorMessage = backendCode ? `[${backendCode}] ${backendMessage || '请求失败，请稍后重试'}` : (backendMessage || '请求失败，请稍后重试')
-      return Promise.reject(new Error(errorMessage))
+      
+      // 将原始error对象传递出去，保持结构
+      const enhancedError = new Error(errorMessage)
+      enhancedError.response = response
+      return Promise.reject(enhancedError)
     } else {
       // 请求未发出或未收到响应
       return Promise.reject(new Error('网络错误，请检查您的网络连接'))

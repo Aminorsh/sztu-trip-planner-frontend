@@ -19,7 +19,7 @@ export function changePassword({ old_password, new_password }) {
 export function updateAvatar(file) {
   const formData = new FormData()
   formData.append('avatar', file)
-  return apiClient.put('/v2/users/update-avatar', formData, {
+  return apiClient.post('/v2/users/upload-avatar', formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }

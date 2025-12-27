@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>头像上传测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        button {
+            background-color: #409EFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background-color: #66b1ff;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background-color: #f0f9ff;
+            border: 1px solid #b3d8ff;
+            color: #1890ff;
+        }
+        .error {
+            background-color: #fef0f0;
+            border: 1px solid #fbc4c4;
+            color: #f56565;
+        }
+    </style>
+</head>
+<body>
+    <h1>头像上传接口测试</h1>
+    
+    <div class="upload-area">
+        <input type="file" id="fileInput" accept="image/jpeg,image/png" />
+        <p>选择图片文件 (JPG/PNG, 最大2MB)</p>
+    </div>
+    
+    <button onclick="testUpload()">上传头像</button>
+    <button onclick="clearResult()">清除结果</button>
+    
+    <div id="result" class="result"></div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8080/api';
+        
+        // 获取存储的token
+        function getToken() {
+            return localStorage.getItem('token');
+        }
+        
+        async function testUpload() {
+            const fileInput = document.getElementById('fileInput');
+            const resultDiv = document.getElementById('result');
+            
+            if (!fileInput.files[0]) {
+                showResult('请先选择文件', 'error');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const token = getToken();
+            
+            if (!token) {
+                showResult('请先登录获取token', 'error');
+                return;
+            }
+            
+            // 文件验证
+            const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
+            const isLt2M = file.size / 1024 / 1024 < 2;
+            
+            if (!isJpgOrPng) {
+                showResult('只能上传 JPG/PNG 格式头像!', 'error');
+                return;
+            }
+            
+            if (!isLt2M) {
+                showResult('头像大小不能超过2MB!', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('avatar', file);
+            
+            showResult('正在上传...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/v2/users/upload-avatar`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(`上传成功！\n\n响应数据：\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult(`上传失败！\n\n状态码：${response.status}\n响应数据：\n${JSON.stringify(data, null, 2)}`, 'error');
+                }
+                
+            } catch (error) {
+                showResult(`请求出错：${error.message}`, 'error');
+            }
+        }
+        
+        function showResult(message, type = 'info') {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = message;
+            resultDiv.className = `result ${type}`;
+        }
+        
+        function clearResult() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = '';
+            resultDiv.className = 'result';
+        }
+        
+        // 页面加载时检查token
+        window.onload = function() {
+            const token = getToken();
+            if (token) {
+                showResult(`Token已获取: ${token.substring(0, 20)}...`, 'success');
+            } else {
+                showResult('未找到Token，请先登录', 'error');
+            }
+        };
+    </script>
+</body>
+</html>

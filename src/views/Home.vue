@@ -144,6 +144,7 @@ import { useAuth } from '@/composables/useAuth'
 import { useRouter } from 'vue-router'
 import { computed, onMounted, ref } from 'vue'
 import { getProfile } from '@/services/userService'
+import { getFullAvatarUrl } from '@/utils/avatarUtils'
 
 // 图片资源导入（ESM 风格）
 import img1 from '@/assets/images/11.jpg'
@@ -176,11 +177,13 @@ export default {
     const userAvatar = ref('')
     const displayName = ref('')
 
+
+
     const fetchUserProfile = async () => {
       if (isLoggedIn.value) {
         try {
           const res = await getProfile()
-          userAvatar.value = res.data.avatar_url || ''
+          userAvatar.value = getFullAvatarUrl(res.data.avatar_url || '')
           displayName.value = res.data.display_name || res.data.username || ''
         } catch (err) {
           console.warn('获取用户信息失败', err)
@@ -188,13 +191,32 @@ export default {
       }
     }
 
-    onMounted(fetchUserProfile)
+    // 监听头像更新事件
+    const onAvatarUpdated = () => {
+      console.log('检测到头像更新，刷新首页头像...')
+      fetchUserProfile()
+    }
 
     const startCarousel = () => {
       setInterval(() => {
         activeSlide.value = (activeSlide.value + 1) % heroImages.length
       }, 4000)
     }
+
+    onMounted(() => {
+      fetchUserProfile()
+      startCarousel()
+      // 监听自定义头像更新事件
+      window.addEventListener('avatar-updated', onAvatarUpdated)
+      
+      // 监听storage变化（当用户在其他页面更新头像时）
+      const handleStorageChange = (e) => {
+        if (e.key === 'avatar-updated') {
+          fetchUserProfile()
+        }
+      }
+      window.addEventListener('storage', handleStorageChange)
+    })
 
     const onLogin = () => router.push({ name: 'Login' })
     const onRegister = () => router.push({ name: 'Register' })
@@ -244,7 +266,7 @@ export default {
       { id: 't3', avatar: avatar3, name: '王小姐', text: '分享功能太棒了，家人也能看到我的旅程动态。' }
     ]
 
-    onMounted(startCarousel)
+
 
     return {
       heroImages,

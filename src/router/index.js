@@ -12,6 +12,7 @@ import ShareTrip from '@/views/ShareTrip.vue'
 import ExportPanel from '@/views/ExportPanel.vue'
 import Notifications from '@/views/Notifications.vue'
 import Profile from '@/views/Profile.vue'
+import ChangePassword from '@/views/ChangePassword.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: Home },
@@ -26,6 +27,7 @@ const routes = [
   { path: '/export/:tripId', name: 'ExportPanel', component: ExportPanel, props: true },
   { path: '/notifications', name: 'Notifications', component: Notifications },
   { path: '/profile', name: 'Profile', component: Profile },
+  { path: '/change-password', name: 'ChangePassword', component: ChangePassword },
   { path: '/share/:shareId', name: 'ShareTrip', component: () => import('@/views/ShareTrip.vue') }
 ]
 

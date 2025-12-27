@@ -29,11 +29,11 @@
           <el-upload
             class="avatar-uploader"
             :show-file-list="false"
-            :before-upload="beforeAvatarUpload"
+            :auto-upload="false"
             :on-change="handleAvatarChange"
           >
-            <img v-if="profile.avatar" :src="profile.avatar" class="avatar-img" alt="avatar" />
-            <i v-else class="el-icon-plus avatar-placeholder"></i>
+            <img v-if="profile.avatar" :src="getFullAvatarUrl(profile.avatar)" class="avatar-img" alt="avatar" />
+            <el-icon v-else class="avatar-placeholder"><Plus /></el-icon>
           </el-upload>
         </el-form-item>
 
@@ -61,20 +61,10 @@
 
       <!-- 密码修改 -->
       <h2 class="section-title">修改密码</h2>
-      <el-form :model="passwordForm" ref="passwordForm" label-position="top" class="form-section">
-        <el-form-item label="旧密码" prop="oldPassword">
-          <el-input type="password" v-model="passwordForm.oldPassword" placeholder="请输入旧密码" />
-        </el-form-item>
-        <el-form-item label="新密码" prop="newPassword">
-          <el-input type="password" v-model="passwordForm.newPassword" placeholder="请输入新密码" />
-        </el-form-item>
-        <el-form-item label="确认新密码" prop="confirmPassword">
-          <el-input type="password" v-model="passwordForm.confirmPassword" placeholder="请再次输入新密码" />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="onChangePassword" :loading="loadingPassword">修改密码</el-button>
-        </el-form-item>
-      </el-form>
+      <div class="form-section">
+        <p style="margin-bottom: 16px; color: #606266;">为了账户安全，请在专门的页面修改密码</p>
+        <el-button type="primary" @click="goToChangePassword">前往修改密码</el-button>
+      </div>
 
       <!-- 通知 / 推送偏好设置 -->
       <!-- <h2 class="section-title">通知 & 推送偏好</h2> -->
@@ -134,10 +124,12 @@
 <script>
 // 引入 Element Plus 组件
 import { ElButton, ElInput, ElUpload, ElForm, ElFormItem, ElSwitch, ElRadioGroup, ElRadio, ElMessage } from 'element-plus'
-import { getProfile, updateProfile, changePassword, updateAvatar } from '@/services/userService'
+import { Plus } from '@element-plus/icons-vue'
+import { getProfile, updateProfile, updateAvatar } from '@/services/userService'
 import { useAuth } from '@/composables/useAuth'
 import { useRouter } from 'vue-router'
 import { onMounted, reactive, ref } from 'vue'
+import { getFullAvatarUrl, triggerAvatarUpdate } from '@/utils/avatarUtils'
 
 export default {
   name: 'Profile',
@@ -145,17 +137,13 @@ export default {
     const { doLogout } = useAuth()
     const router = useRouter()
     const loadingProfile = ref(false)
-    const loadingPassword = ref(false)
     const profile = reactive({
       avatar: '',
       display_name: '',
       bio: ''
     })
-    const passwordForm = reactive({
-      oldPassword: '',
-      newPassword: '',
-      confirmPassword: ''
-    })
+
+
 
     const fetchProfile = async () => {
       try {
@@ -172,27 +160,41 @@ export default {
 
     onMounted(fetchProfile)
 
-    const beforeAvatarUpload = (file) => {
+    const handleAvatarChange = async (uploadFile) => {
+      const file = uploadFile.raw
+      if (!file) return
+      
       const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png'
       const isLt2M = file.size / 1024 / 1024 < 2
+      
       if (!isJpgOrPng) {
         ElMessage.error('只能上传 JPG/PNG 格式头像!')
+        return
       }
       if (!isLt2M) {
         ElMessage.error('头像大小不能超过2MB!')
+        return
       }
-      return isJpgOrPng && isLt2M
-    }
-
-    const handleAvatarChange = async (file) => {
-      const valid = beforeAvatarUpload(file.raw)
-      if (!valid) return
+      
       try {
-        const res = await updateAvatar(file.raw)
-        profile.avatar = res.data.avatar_url || ''
-        ElMessage.success('头像更新成功')
+        console.log('开始上传头像，文件:', file.name)
+        const res = await updateAvatar(file)
+        console.log('头像上传响应:', res)
+        // 后端返回结构: {success: true, data: {avatar_url: "..."}}
+        if (res.success && res.data?.avatar_url) {
+          profile.avatar = res.data.avatar_url
+          ElMessage.success('头像更新成功')
+          
+          // 触发全局头像更新事件，通知其他页面刷新头像
+          triggerAvatarUpdate(res.data.avatar_url)
+        } else {
+          ElMessage.error('头像更新失败：响应数据格式错误')
+        }
       } catch (err) {
-        ElMessage.error('头像更新失败：' + err.message)
+        console.error('头像上传失败:', err)
+        // 更详细的错误信息
+        const errorMessage = err.response?.data?.message || err.response?.data?.error?.message || err.message
+        ElMessage.error('头像更新失败：' + errorMessage)
       }
     }
 
@@ -212,26 +214,12 @@ export default {
       fetchProfile()
     }
 
-    const onChangePassword = async () => {
-      if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-        ElMessage.error('新密码与确认密码不一致')
-        return
-      }
-      loadingPassword.value = true
-      try {
-        await changePassword({ old_password: passwordForm.oldPassword, new_password: passwordForm.newPassword })
-        ElMessage.success('密码已修改')
-        Object.assign(passwordForm, { oldPassword: '', newPassword: '', confirmPassword: '' })
-      } catch (err) {
-        ElMessage.error('修改密码失败：' + err.message)
-      } finally {
-        loadingPassword.value = false
-      }
-    }
+
 
     const goHome = () => router.push({ name: 'Home' })
     const goDashboard = () => router.push({ name: 'Dashboard' })
     const goProfile = () => {}
+    const goToChangePassword = () => router.push({ name: 'ChangePassword' })
     const onLogout = () => {
       doLogout()
       router.push({ name: 'Login' })
@@ -239,18 +227,16 @@ export default {
 
     return {
       loadingProfile,
-      loadingPassword,
       profile,
-      passwordForm,
       goHome,
       goDashboard,
       goProfile,
+      goToChangePassword,
       onLogout,
-      beforeAvatarUpload,
+      getFullAvatarUrl,
       handleAvatarChange,
       onSaveProfile,
       onCancelProfile,
-      onChangePassword,
     }
   }
 }</script>
