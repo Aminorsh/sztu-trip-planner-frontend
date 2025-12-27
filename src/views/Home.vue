@@ -11,8 +11,25 @@
           <!-- <el-button type="text" class="nav-btn">关于我们</el-button> -->
         <!-- </nav> -->
         <div class="auth-buttons">
-          <el-button class="btn-small btn-soft Mantou" @click="onLogin">登录</el-button>
-          <el-button class="btn-small btn-soft Mantou" @click="onRegister">注册</el-button>
+          <template v-if="isLoggedIn">
+            <el-dropdown @command="onUserMenuCommand" trigger="click">
+              <div class="avatar-wrapper">
+                <img v-if="userAvatar" :src="userAvatar" class="header-avatar" alt="avatar" />
+                <div v-else class="header-avatar-placeholder">{{ displayName?.charAt(0).toUpperCase() || 'U' }}</div>
+              </div>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="profile">个人资料</el-dropdown-item>
+                  <el-dropdown-item command="dashboard">我的行程</el-dropdown-item>
+                  <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </template>
+          <template v-else>
+            <el-button class="btn-small btn-soft Mantou" @click="onLogin">登录</el-button>
+            <el-button class="btn-small btn-soft Mantou" @click="onRegister">注册</el-button>
+          </template>
         </div>
       </div>
     </header>
@@ -112,7 +129,7 @@
           <el-icon><Promotion /></el-icon>
         </div>
         <div class="footer-copyright">
-          © 2025 TravelPlanner 保留所有权利
+          2025 TravelPlanner 保留所有权利
         </div>
       </div>
     </footer>
@@ -121,8 +138,12 @@
 
 <script>
 // 导入 Element Plus 组件 & 图标
-import { ElButton, ElIcon } from 'element-plus'
+import { ElButton, ElIcon, ElDropdown, ElDropdownMenu, ElDropdownItem, ElMessage } from 'element-plus'
 import { ChatDotRound, PictureRounded, Promotion } from '@element-plus/icons-vue'
+import { useAuth } from '@/composables/useAuth'
+import { useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { getProfile } from '@/services/userService'
 
 // 图片资源导入（ESM 风格）
 import img1 from '@/assets/images/11.jpg'
@@ -140,59 +161,105 @@ import trip1img from '/src/assets/images/5.jpg'
 import trip2img from '/src/assets/images/6.jpg'
 import trip3img from '/src/assets/images/7.jpg'
 
-
-
 export default {
   name: 'Home',
   components: {
     ElButton,
-    ElIcon
+    ElIcon,
+    ElDropdown,
+    ElDropdownMenu,
+    ElDropdownItem
   },
-  data() {
-    return {
-      heroImages: [img1, img2, img3],
-      iconDrag,iconMap,iconShare,trip1img,trip2img,trip3img,
-      avatar1,avatar2,avatar3,
-      activeSlide: 0,
-      features: [
-        { id: 1, icon: iconDrag, title: '拖拽规划', description: '将景点拖入日程，自由排序构建专属行程' },
-        { id: 2, icon: iconMap, title: '地图可视化', description: '在地图上查看路线、足迹、距离与时间' },
-        { id: 3, icon: iconShare, title: '协作分享', description: '邀请朋友一起编辑行程,实时同步更新' },
-        { id: 4, icon: iconSharei, title: '路线优化', description: 'AI智能规划路线,自动调整景点顺序' }
-      ],
-      
-      exampleTrips: [
-        { id: 'trip1', coverImage: trip1img, title: '东京＋箱根 5 日游', days: 5, stops: 8 },
-        { id: 'trip2', coverImage: trip2img, title: '欧洲12国经典 20 日', days: 20, stops: 35 },
-        { id: 'trip3', coverImage: trip3img, title: '美国国家公园 10 日探险', days: 10, stops: 12 }
-      ],
-      testimonials: [
-        { id: 't1', avatar: avatar1, name: '张女士', text: '用了这个工具后，我轻松规划了环岛旅行，太方便了！' },
-        { id: 't2', avatar: avatar2, name: '李先生', text: '和朋友一起编辑行程，看到实时轨迹非常兴奋。' },
-        { id: 't3', avatar: avatar3, name: '王小姐', text: '分享功能太棒了，家人也能看到我的旅程动态。' }
-      ]
+  setup() {
+    const { isLoggedIn, token } = useAuth()
+    const router = useRouter()
+    const userAvatar = ref('')
+    const displayName = ref('')
+
+    const fetchUserProfile = async () => {
+      if (isLoggedIn.value) {
+        try {
+          const res = await getProfile()
+          userAvatar.value = res.data.avatar_url || ''
+          displayName.value = res.data.display_name || res.data.username || ''
+        } catch (err) {
+          console.warn('获取用户信息失败', err)
+        }
+      }
     }
-  },
-  mounted() {
-    this.startCarousel()
-  },
-  methods: {
-    startCarousel() {
+
+    onMounted(fetchUserProfile)
+
+    const startCarousel = () => {
       setInterval(() => {
-        this.activeSlide = (this.activeSlide + 1) % this.heroImages.length
+        activeSlide.value = (activeSlide.value + 1) % heroImages.length
       }, 4000)
-    },
-    onLogin() {
-      this.$router.push({ name: 'Login' })
-    },
-    onRegister() {
-      this.$router.push({ name: 'Register' })
-    },
-    onGetStarted() {
-      this.$router.push({ name: 'Dashboard' })
-    },
-    onViewTrip(tripId) {
-      this.$router.push({ name: 'ShareTrip', params: { shareId: tripId } })
+    }
+
+    const onLogin = () => router.push({ name: 'Login' })
+    const onRegister = () => router.push({ name: 'Register' })
+    const onGetStarted = () => {
+      if (isLoggedIn.value) {
+        router.push({ name: 'Dashboard' })
+      } else {
+        ElMessage.warning('请先登录')
+        router.push({ name: 'Login' })
+      }
+    }
+    const onViewTrip = (tripId) => router.push({ name: 'ShareTrip', params: { shareId: tripId } })
+    const onUserMenuCommand = (command) => {
+      switch (command) {
+        case 'profile':
+          router.push({ name: 'Profile' })
+          break
+        case 'dashboard':
+          router.push({ name: 'Dashboard' })
+          break
+        case 'logout':
+          const { doLogout } = useAuth()
+          doLogout()
+          userAvatar.value = ''
+          displayName.value = ''
+          router.push({ name: 'Login' })
+          break
+      }
+    }
+
+    const heroImages = [img1, img2, img3]
+    const activeSlide = ref(0)
+    const features = [
+      { id: 1, icon: iconDrag, title: '拖拽规划', description: '将景点拖入日程，自由排序构建专属行程' },
+      { id: 2, icon: iconMap, title: '地图可视化', description: '在地图上查看路线、足迹、距离与时间' },
+      { id: 3, icon: iconShare, title: '协作分享', description: '邀请朋友一起编辑行程,实时同步更新' },
+      { id: 4, icon: iconSharei, title: '路线优化', description: 'AI智能规划路线,自动调整景点顺序' }
+    ]
+    const exampleTrips = [
+      { id: 'trip1', coverImage: trip1img, title: '东京＋箱根 5 日游', days: 5, stops: 8 },
+      { id: 'trip2', coverImage: trip2img, title: '欧洲12国经典 20 日', days: 20, stops: 35 },
+      { id: 'trip3', coverImage: trip3img, title: '美国国家公园 10 日探险', days: 10, stops: 12 }
+    ]
+    const testimonials = [
+      { id: 't1', avatar: avatar1, name: '张女士', text: '用了这个工具后，我轻松规划了环岛旅行，太方便了！' },
+      { id: 't2', avatar: avatar2, name: '李先生', text: '和朋友一起编辑行程，看到实时轨迹非常兴奋。' },
+      { id: 't3', avatar: avatar3, name: '王小姐', text: '分享功能太棒了，家人也能看到我的旅程动态。' }
+    ]
+
+    onMounted(startCarousel)
+
+    return {
+      heroImages,
+      activeSlide,
+      features,
+      exampleTrips,
+      testimonials,
+      isLoggedIn,
+      userAvatar,
+      displayName,
+      onLogin,
+      onRegister,
+      onGetStarted,
+      onViewTrip,
+      onUserMenuCommand
     }
   }
 }
@@ -294,6 +361,32 @@ export default {
 .btn:active {
   transform: scale(0.97);
 }
+/* 头像下拉菜单 */
+.avatar-wrapper {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.header-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #e0e0e0;
+}
+.header-avatar-placeholder {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #2a2785;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+}
+
 .btn-small.btn-soft {
   font-size: 1.3rem;
   font-weight: 100;

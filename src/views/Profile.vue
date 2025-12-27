@@ -37,14 +37,9 @@
           </el-upload>
         </el-form-item>
 
-        <!-- 用户名 -->
-        <el-form-item label="用户名" prop="username">
-          <el-input v-model="profile.username" placeholder="请输入用户名" />
-        </el-form-item>
-
-        <!-- 邮箱 -->
-        <el-form-item label="邮箱" prop="email">
-          <el-input v-model="profile.email" placeholder="请输入邮箱" />
+        <!-- 昵称 -->
+        <el-form-item label="昵称" prop="display_name">
+          <el-input v-model="profile.display_name" placeholder="请输入昵称" />
         </el-form-item>
 
         <!-- 简介 -->
@@ -138,138 +133,127 @@
 
 <script>
 // 引入 Element Plus 组件
-import { ElButton, ElInput, ElUpload, ElForm, ElFormItem, ElSwitch, ElRadioGroup, ElRadio } from 'element-plus'
-import heroTravel from '@/assets/images/hero-travel4.jpg'
+import { ElButton, ElInput, ElUpload, ElForm, ElFormItem, ElSwitch, ElRadioGroup, ElRadio, ElMessage } from 'element-plus'
+import { getProfile, updateProfile, changePassword, updateAvatar } from '@/services/userService'
+import { useAuth } from '@/composables/useAuth'
+import { useRouter } from 'vue-router'
+import { onMounted, reactive, ref } from 'vue'
 
 export default {
   name: 'Profile',
-  components: {
-    ElButton,
-    ElInput,
-    ElUpload,
-    ElForm,
-    ElFormItem,
-    ElSwitch,
-    ElRadioGroup,
-    ElRadio
-  },
-  data() {
-    return {
-      heroTravel,
-      loadingProfile: false,
-      loadingPassword: false,
-      loadingPref: false,
-      loadingPrivacy: false,
-      profile: {
-        avatar: '',
-        username: '',
-        email: '',
-        bio: ''
-      },
-      passwordForm: {
-        oldPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      },
-      preferences: {
-        emailNotifications: true,
-        pushNotifications: false
-      },
-      privacy: {
-        defaultShareStatus: 'public'
+  setup() {
+    const { doLogout } = useAuth()
+    const router = useRouter()
+    const loadingProfile = ref(false)
+    const loadingPassword = ref(false)
+    const profile = reactive({
+      avatar: '',
+      display_name: '',
+      bio: ''
+    })
+    const passwordForm = reactive({
+      oldPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    })
+
+    const fetchProfile = async () => {
+      try {
+        const res = await getProfile()
+        Object.assign(profile, {
+          avatar: res.data.avatar_url || '',
+          display_name: res.data.display_name || '',
+          bio: res.data.bio || ''
+        })
+      } catch (err) {
+        ElMessage.error('获取个人信息失败：' + err.message)
       }
     }
-  },
-  methods: {
-    goHome() {
-      this.$router.push({ name: 'Home' })
-    },
-    goDashboard() {
-      this.$router.push({ name: 'Dashboard' })
-    },
-    onLogout() {
-      // 注销逻辑
-      console.log('用户注销')
-      this.$router.push({ name: 'Login' })
-    },
-    beforeAvatarUpload(file) {
+
+    onMounted(fetchProfile)
+
+    const beforeAvatarUpload = (file) => {
       const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png'
       const isLt2M = file.size / 1024 / 1024 < 2
       if (!isJpgOrPng) {
-        this.$message.error('只能上传 JPG/PNG 格式头像!')
+        ElMessage.error('只能上传 JPG/PNG 格式头像!')
       }
       if (!isLt2M) {
-        this.$message.error('头像大小不能超过2MB!')
+        ElMessage.error('头像大小不能超过2MB!')
       }
       return isJpgOrPng && isLt2M
-    },
-    handleAvatarChange(file, fileList) {
-      // 模拟上传后返回 URL
-      const reader = new FileReader()
-      reader.readAsDataURL(file.raw)
-      reader.onload = () => {
-        this.profile.avatar = reader.result
+    }
+
+    const handleAvatarChange = async (file) => {
+      const valid = beforeAvatarUpload(file.raw)
+      if (!valid) return
+      try {
+        const res = await updateAvatar(file.raw)
+        profile.avatar = res.data.avatar_url || ''
+        ElMessage.success('头像更新成功')
+      } catch (err) {
+        ElMessage.error('头像更新失败：' + err.message)
       }
-    },
-    onSaveProfile() {
-      this.loadingProfile = true
-      // 模拟保存过程
-      setTimeout(() => {
-        this.loadingProfile = false
-        this.$message.success('资料已保存')
-      }, 1000)
-    },
-    onCancelProfile() {
-      // 恢复初始值或刷新页面
-      console.log('取消编辑资料')
-    },
-    onChangePassword() {
-      if (this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
-        this.$message.error('新密码与确认密码不一致')
+    }
+
+    const onSaveProfile = async () => {
+      loadingProfile.value = true
+      try {
+        await updateProfile({ display_name: profile.display_name, bio: profile.bio })
+        ElMessage.success('资料已保存')
+      } catch (err) {
+        ElMessage.error('保存失败：' + err.message)
+      } finally {
+        loadingProfile.value = false
+      }
+    }
+
+    const onCancelProfile = () => {
+      fetchProfile()
+    }
+
+    const onChangePassword = async () => {
+      if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+        ElMessage.error('新密码与确认密码不一致')
         return
       }
-      this.loadingPassword = true
-      // 模拟密码修改过程
-      setTimeout(() => {
-        this.loadingPassword = false
-        this.$message.success('密码已修改')
-        // 清空表单
-        this.passwordForm.oldPassword = ''
-        this.passwordForm.newPassword = ''
-        this.passwordForm.confirmPassword = ''
-      }, 1000)
-    },
-    onSavePreferences() {
-      this.loadingPref = true
-      setTimeout(() => {
-        this.loadingPref = false
-        this.$message.success('偏好设置已保存')
-      }, 500)
-    },
-    onSavePrivacy() {
-      this.loadingPrivacy = true
-      setTimeout(() => {
-        this.loadingPrivacy = false
-        this.$message.success('隐私设置已保存')
-      }, 500)
-    },
-    onDeleteAccount() {
-      // 弹窗确认是否删除账号
-      this.$confirm('删除后无法恢复，确定要删除账号吗？', '警告', {
-        confirmButtonText: '删除',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        console.log('账号删除逻辑执行')
-        this.$message.success('账号已删除')
-        this.$router.push({ name: 'Login' })
-      }).catch(() => {
-        this.$message.info('已取消删除')
-      })
+      loadingPassword.value = true
+      try {
+        await changePassword({ old_password: passwordForm.oldPassword, new_password: passwordForm.newPassword })
+        ElMessage.success('密码已修改')
+        Object.assign(passwordForm, { oldPassword: '', newPassword: '', confirmPassword: '' })
+      } catch (err) {
+        ElMessage.error('修改密码失败：' + err.message)
+      } finally {
+        loadingPassword.value = false
+      }
+    }
+
+    const goHome = () => router.push({ name: 'Home' })
+    const goDashboard = () => router.push({ name: 'Dashboard' })
+    const goProfile = () => {}
+    const onLogout = () => {
+      doLogout()
+      router.push({ name: 'Login' })
+    }
+
+    return {
+      loadingProfile,
+      loadingPassword,
+      profile,
+      passwordForm,
+      goHome,
+      goDashboard,
+      goProfile,
+      onLogout,
+      beforeAvatarUpload,
+      handleAvatarChange,
+      onSaveProfile,
+      onCancelProfile,
+      onChangePassword,
     }
   }
-}
-</script>
+}</script>
 
 
 <style scoped>

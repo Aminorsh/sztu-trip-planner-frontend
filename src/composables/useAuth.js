@@ -11,6 +11,17 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref(localStorage.getItem('token') || '')
   const user = ref(null) // 如果后端返回 user info，可以存到这里
 
+  // 监听 storage 事件，实现多标签页同步
+  if (typeof window !== 'undefined') {
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'token') {
+        const newToken = e.newValue
+        token.value = newToken || ''
+        console.log('[useAuth] token 被其他标签页更新', { newToken })
+      }
+    })
+  }
+
   // 计算属性：是否已登录
   const isLoggedIn = computed(() => {
     return !!token.value
@@ -49,6 +60,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     token.value = t
     localStorage.setItem('token', t)
+    console.log('[useAuth] 登录成功，token 已存储', { token: t, user: response.user })
 
 
     // 如果返回 user 信息，也存起来
@@ -66,6 +78,7 @@ export const useAuthStore = defineStore('auth', () => {
     const t = result.token
     token.value = t
     localStorage.setItem('token', t)
+    console.log('[useAuth] 注册成功，token 已存储', { token: t, user: result.user })
 
     if (result.user) {
       user.value = result.user

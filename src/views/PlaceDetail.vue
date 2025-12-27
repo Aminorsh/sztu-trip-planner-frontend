@@ -12,87 +12,38 @@
       </div>
     </header>
 
-    <div class="content-wrapper">
-      <!-- 左列：两张图片（圆 + 矩形） -->
-      <div class="image-column">
-        <!-- <div class="image-circle"> -->
-          <!-- <img :src="coverImages[0]" alt="图片圆形" /> -->
-        <!-- </div> -->
-        <!-- <div class="image-rect"> -->
-          <!-- <img :src="coverImages[1]" alt="图片矩形" /> -->
-        <!-- </div> -->
-        <div class="image-grid">
-          <div class="img-item hero-img" :style="{ gridColumn: '1 / 3' }">
-            <img :src="coverImages[0]" alt="hero" />
-            <!-- <div class="img-text mantou">找一家有故事的民宿，度过一个悠闲的假期。感受这里的慢时光，让生活回归简单与纯粹。</div> -->
-          </div>
-          <div class="img-item" v-for="i in 6" :key="i">
-              <img :src="coverImages[i]" alt="place-img" />
-              
-          </div>
-        </div>
+    <div class="main-content">
+      <div class="carousel-wrapper">
+        <el-carousel v-if="coverImages.length" height="420px" :interval="4000" arrow="always">
+          <el-carousel-item v-for="(img, idx) in coverImages" :key="idx">
+            <img class="carousel-img" :src="img" alt="place" />
+          </el-carousel-item>
+        </el-carousel>
+        <div v-else class="carousel-empty">暂无图片</div>
       </div>
 
-      <!-- 右列：表单信息（左一右二布局） -->
-      <div class="form-column">
-        <el-form :model="place" label-position="top" class="info-form" size="small">
-          <!-- 名称：全宽 -->
-          <div class="form-row full-width">
-            <el-form-item label="名称">
-              <el-input v-model="place.name" disabled />
-            </el-form-item>
+      <div class="detail-wrapper">
+        <div class="detail-header">
+          <div class="detail-title">{{ place.name }}</div>
+          <div class="detail-sub">
+            <span class="detail-item">地址：{{ place.address }}</span>
+            <span class="detail-item">类别：{{ place.category }}</span>
+            <span class="detail-item">评分：{{ displayRating }}</span>
           </div>
-          <!-- 地址 / 类别 -->
-          <div class="form-row two-cols mantou">
-            <div class="col">
-              <el-form-item label="地址">
-                <el-input v-model="place.address" disabled />
-              </el-form-item>
-            </div>
-            <div class="col">
-              <el-form-item label="类别">
-                <el-input v-model="place.category" disabled />
-              </el-form-item>
-            </div>
+        </div>
+
+        <div class="detail-section">
+          <div class="section-title">简介</div>
+          <div v-if="place.description" class="section-content">
+            {{ place.description }}
           </div>
-          <!-- 评分 / 开放时间 -->
-          <div class="form-row two-cols">
-            <div class="col">
-              <el-form-item label="评分">
-                <el-input v-model="place.rating" disabled />
-              </el-form-item>
-            </div>
-            <div class="col">
-              <el-form-item label="开放时间">
-                <el-input v-model="place.openingHours" disabled />
-              </el-form-item>
-            </div>
+          <div v-else class="section-actions">
+            <el-button class="mantou" type="primary" :loading="aiLoading" @click="generateAiDescription">
+              {{ aiLoading ? '生成中...' : 'AI生成简介' }}
+            </el-button>
+            <div v-if="errorMessage" class="error-text">{{ errorMessage }}</div>
           </div>
-          <!-- 简介 -->
-          <div class="form-row full-width">
-            <el-form-item label="简介">
-              <el-input
-                type="textarea"
-                v-model="place.description"
-                disabled
-                :rows="4"
-              />
-            </el-form-item>
-          </div>
-          <!-- 票价 / 须知 -->
-          <div class="form-row two-cols">
-            <div class="col">
-              <el-form-item label="票价">
-                <el-input v-model="place.ticketPrice" disabled />
-              </el-form-item>
-            </div>
-            <div class="col">
-              <el-form-item label="须知">
-                <el-input v-model="place.notes" disabled />
-              </el-form-item>
-            </div>
-          </div>
-        </el-form>
+        </div>
       </div>
     </div>
 
@@ -112,40 +63,97 @@
 </template>
 
 <script>
-import heroTravel from '@/assets/images/14.jpg'
-import heroTravel2 from '@/assets/images/hero-travel2.jpg'
-import mapPlaceholder from '@/assets/images/hero-travel3.jpg'
-import trip1img from '/src/assets/images/5.jpg'
-import trip2img from '/src/assets/images/6.jpg'
-import img1 from '@/assets/images/11.jpg'
-import img2 from '@/assets/images/12.jpg'
-import img3 from '@/assets/images/13.jpg'
-import img4 from '@/assets/images/15.jpg'
-import trip3img from '/src/assets/images/7.jpg'
-import avatar3 from '/src/assets/images/10.jpg'
 import { defineComponent } from 'vue'
+import * as placeService from '@/services/placeService'
 
 export default defineComponent({
   name: 'PlaceDetail',
+  props: {
+    placeId: {
+      type: String,
+      required: false,
+      default: ''
+    }
+  },
   data() {
     return {
-      coverImages: [img4,img1,img2,img3,trip2img,trip3img,avatar3],
-      mapPlaceholder,
+      coverImages: [],
+      loading: false,
+      error: null,
+      aiLoading: false,
       place: {
         id: 'p1',
         name: '浅草寺',
         address: '东京都台东区浅草2-3-1',
         category: '景点',
         rating: 4.5,
-        description: '东京最古老、最著名的寺庙之一，历史悠久，文化底蕴深厚。',
-        highlights: ['雷门大灯笼', '五重塔', '仲见世购物街'],
-        openingHours: '06:00-18:00',
-        ticketPrice: '免费入场（部分展馆除外）',
-        notes: '请遵守寺庙礼仪，注意语音干扰。'
+        description: '东京最古老、最著名的寺庙之一，历史悠久，文化底蕴深厚。'
       }
     }
   },
+  computed: {
+    errorMessage() {
+      return this.error ? (this.error.message || String(this.error)) : ''
+    },
+    displayRating() {
+      const r = this.place?.rating
+      if (!r || Number(r) === 0) return '暂无评分'
+      return r
+    }
+  },
   methods: {
+    async fetchPlaceDetail() {
+      const pid = this.placeId || this.$route.params.placeId
+      if (!pid) return
+
+      this.loading = true
+      this.error = null
+      try {
+        const resp = await placeService.getPlaceDetail(pid)
+        const body = resp?.data || resp
+        const payload = body?.data || body
+        this.place = {
+          id: payload.id,
+          name: payload.name,
+          address: payload.address,
+          category: payload.type || payload.category,
+          rating: payload.rating,
+          description: payload.description
+        }
+
+        if (Array.isArray(payload.photos) && payload.photos.length > 0) {
+          this.coverImages = payload.photos
+        } else if (payload.image) {
+          this.coverImages = [payload.image]
+        } else {
+          this.coverImages = []
+        }
+      } catch (e) {
+        this.error = e
+      } finally {
+        this.loading = false
+      }
+    },
+    async generateAiDescription() {
+      const pid = this.placeId || this.$route.params.placeId
+      if (!pid) return
+
+      this.aiLoading = true
+      this.error = null
+      try {
+        const resp = await placeService.getPlaceAiDescription(pid)
+        const body = resp?.data || resp
+        const payload = body?.data || body
+        const desc = payload?.description
+        if (desc) {
+          this.place.description = desc
+        }
+      } catch (e) {
+        this.error = e
+      } finally {
+        this.aiLoading = false
+      }
+    },
     goBack() {
       this.$router.back()
     },
@@ -158,6 +166,10 @@ export default defineComponent({
         this.$router.push({ name: 'TripDetail', params: { tripId } })
       }
     }
+  }
+  ,
+  mounted() {
+    this.fetchPlaceDetail()
   }
 })
 </script>
@@ -193,82 +205,88 @@ export default defineComponent({
 }
 
 /* 主体布局 */
-.content-wrapper {
-  display: flex;
-  gap: 24px;
-  margin-top: 24px;
+.main-content {
+  margin-top: 16px;
 }
 
-/* 图片列 */
-.image-column {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.image-circle img {
-  width: 200px;
-  height: 200px;
-  object-fit: cover;
-  border-radius: 50%;
-  border: 4px solid #fff;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-}
-.image-rect img {
-  width: 100%;
-  height: 260px;
-  object-fit: cover;
+.carousel-wrapper {
   border-radius: 14px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-}
-
-/* 表单列 */
-.form-column {
-  flex: 2;
-}
-.info-form {
-  background: linear-gradient(to bottom, #e4e8f4 0%,#a0e6ff59 55%, #ffffff 100%);
-  border-radius: 14px;
-  padding: 24px;
+  overflow: hidden;
   box-shadow: 0 12px 30px rgba(0,0,0,0.06);
 }
-.form-row {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-.full-width {
+
+.carousel-img {
   width: 100%;
-}
-.two-cols .col {
-  flex: 1;
+  height: 420px;
+  object-fit: cover;
 }
 
-/* 下方 extra 部分 */
-.extra-section {
+.carousel-empty {
+  height: 420px;
   display: flex;
-  gap: 24px;
-  margin-top: 32px;
+  align-items: center;
+  justify-content: center;
+  background: #f6f7fb;
+  color: #999;
+  font-size: 1.2rem;
 }
-.map-mini img {
-  width: 40%;
-  border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+
+.detail-wrapper {
+  margin-top: 16px;
+  background: linear-gradient(to bottom, #e4e8f4 0%,#a0e6ff59 55%, #ffffff 100%);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.06);
 }
-.highlights {
-  flex: 1;
+
+.detail-title {
+  font-size: 1.8rem;
+  color: #131068;
+  font-weight: 600;
 }
-.highlights h3 {
-  color: #8c88ff;
-  margin-bottom: 12px;
+
+.detail-sub {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 1.1rem;
+  color: #444;
 }
-.highlights ul {
-  list-style: disc;
-  padding-left: 20px;
+
+.detail-item {
+  padding: 6px 10px;
+  background: rgba(255,255,255,0.65);
+  border-radius: 10px;
 }
-.highlights li {
-  margin-bottom: 8px;
-  color: #555;
+
+.detail-section {
+  margin-top: 16px;
+}
+
+.section-title {
+  font-size: 1.3rem;
+  color: #131068;
+  font-weight: 600;
+}
+
+.section-content {
+  margin-top: 10px;
+  font-size: 1.1rem;
+  color: #333;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+.section-actions {
+  margin-top: 12px;
+}
+
+.error-text {
+  margin-top: 10px;
+  color: #d33;
+  font-size: 1rem;
+  line-height: 1.4;
 }
 
 @font-face {
@@ -316,54 +334,11 @@ export default defineComponent({
   }
 }
 
-/* 3 行 3 列网格 */
-.image-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr); /* 2 列 */
-  grid-auto-rows: 100px;                /* 每行固定高 */
-  gap: 12px;
-}
-
-/* 第一行大图 */
-.hero-img {
-  grid-column: 1 / 3;   /* 占满 2 列 */
-  grid-row: 1 / 3;      /* 第 1 行 */
-  position: relative;
-}
-
-
 .mantou {
   font-family: 'Mantou', sans-serif;
   letter-spacing: 0.02em;
   font-size: 1.1rem;
   font-weight: 400;
-}
-/* 文字覆盖 */
-.img-text {
-  
-  
-  position: absolute;
-  bottom: 12px; left: 12px;
-  color: #fcfcfc;
-  /* background: rgba(0,0,0,0.45); */
-  padding: 6px 12px;
-  border-radius: 6px;
-  
-}
-
-.img-item img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-/* 响应式：屏幕窄时变 2 列 */
-@media (max-width: 1024px) {
-  .image-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 
 </style>

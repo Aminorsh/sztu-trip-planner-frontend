@@ -45,10 +45,10 @@
                   <p class="place-address">{{ place.address }}</p>
                   <p class="place-desc">{{ place.description }}</p>
                   <div class="place-actions">
-                    <el-button size="mini" type="primary" :disabled="place.added" @click="addPlace(place)">
+                    <el-button size="small" type="primary" :disabled="place.added" @click="addPlace(place)">
                       {{ place.added ? '已添加' : '加入行程' }}
                     </el-button>
-                    <el-button class="detail" size="mini" @click="viewDetails(place)">
+                    <el-button class="detail" size="small" @click="viewDetails(place)">
                       详情
                     </el-button>
                   </div>
@@ -87,12 +87,8 @@ import heroTravel10 from '@/assets/images/10.jpg'
 import heroTravel11 from '@/assets/images/11.jpg'
 import heroTravel12 from '@/assets/images/12.jpg'
 import heroTravel13 from '@/assets/images/13.jpg'
-import axios from 'axios'
+import * as placeService from '@/services/placeService'
 
-// 高德 key
-const AMAP_KEY = 'ca55a345ea12a37b1e00830ee7f62380'
-// inputtips 接口
-const INPUTTIPS_URL = 'https://restapi.amap.com/v3/assistant/inputtips'
 const IMAGE_POOL = [
   heroTravel,
   heroTravel2,
@@ -127,7 +123,8 @@ export default {
       filterType: '',
       sortOrder: '',
       places: [],
-      debounceTimer: null
+      debounceTimer: null,
+      suggestDebounceTimer: null
     }
   },
   methods: {
@@ -144,87 +141,60 @@ export default {
         this.places = []
         return
       }
-    
-      const res = await axios.get(
-        'https://restapi.amap.com/v3/place/text',
-        {
-          params: {
-            key: AMAP_KEY,
-            keywords: this.keyword,
-            // city: '北京',
-            // citylimit: true,
-            types: this.filterType === 'scenic'
-              ? '110000|110100' // 风景名胜（可不填）
-              : '',
-            extensions: 'base',
-            offset: 10,
-            page: 1
-          }
-        }
-      )
-      
-      if (res.data.status !== '1') {
-        this.places = []
-        return
-      }
-    
-      this.places = res.data.pois.map(poi => {
-        const [lng, lat] = poi.location
-          ? poi.location.split(',').map(Number)
-          : []
-      
+
+      const resp = await placeService.searchPlacesByKeyword(this.keyword, {
+        filter_type: this.filterType,
+        sort_order: this.sortOrder
+      })
+
+      const body = resp?.data || resp
+      const payload = body?.data || body
+      const list = payload?.places || []
+
+      this.places = list.map(p => {
         return {
-          id: poi.id,
-          name: poi.name,
-          address: poi.address,
-          description: poi.type,
-          image: this.getImageById(poi.id), // ⭐ 随机图
-          rating: poi.biz_ext?.rating || '暂无',
-          distance: poi.distance ? (poi.distance / 1000).toFixed(2) : null,
-          openingHours: poi.opening_hours || '以现场为准',
-          lnglat: [lng, lat],
-          added: this.existingPlaceIds.includes(poi.id),
+          id: p.id,
+          name: p.name,
+          address: p.address,
+          description: p.description || p.type,
+          image: p.image || this.getImageById(p.id),
+          rating: p.rating ?? '暂无',
+          distance: p.distance ?? null,
+          openingHours: p.openingHours || '以现场为准',
+          lnglat: p.location ? [p.location.lng, p.location.lat] : [],
+          added: this.existingPlaceIds.includes(p.id),
           expanded: false
         }
       })
     },
-    // 把原来的 axios 请求换成 JSONP
-    querySearchAsync(queryStr, cb) {
-      if (!queryStr || !queryStr.trim()) { cb([]); return }
+    async querySearchAsync(queryStr, cb) {
+      const q = (queryStr || '').trim()
+      if (!q) { cb([]); return }
 
-      // 清理上一次脚本
-      if (this._script) {
-        document.head.removeChild(this._script)
-        delete this._script
-      }
-      // 全局回调名每次随机，防止并发覆盖
-      const cbName = '_mapCb' + Date.now()
-      window[cbName] = (data) => {
-        console.log('高德 tips 返回', data) 
-        // 容错
-        const sugs = (data.status === '1' && data.tips
-          ? data.tips.map(t => ({ value: t.name }))
-          : [])
-          console.log('准备喂给 el-autocomplete 的数组', sugs) 
-        cb(sugs)
-        // 清场
-        if (this._script) {
-          document.head.removeChild(this._script)
-          delete this._script
+      // 限制最小输入长度，避免 d/df/dfm 这类无意义请求
+      if (q.length < 2) { cb([]); return }
+
+      // 防抖：输入停止一会儿再发请求
+      if (this.suggestDebounceTimer) clearTimeout(this.suggestDebounceTimer)
+      this.suggestDebounceTimer = setTimeout(async () => {
+        try {
+          const resp = await placeService.searchPlacesByKeyword(q, {
+            filter_type: this.filterType,
+            sort_order: this.sortOrder
+          })
+          const body = resp?.data || resp
+          const payload = body?.data || body
+          const list = payload?.places || []
+          cb(list.map(p => ({ value: p.name, id: p.id })))
+        } catch (e) {
+          cb([])
         }
-        delete window[cbName]
-      }
-
-      this._script = document.createElement('script')
-      this._script.src = `${INPUTTIPS_URL}?key=${AMAP_KEY}&keywords=${encodeURIComponent(
-        queryStr.trim()
-      )}&callback=${cbName}`
-      document.head.appendChild(this._script)
+      }, 350)
     },
     onSearch() {
       if (this.debounceTimer) clearTimeout(this.debounceTimer)
       this.debounceTimer = setTimeout(() => {
-        this.fetchPlaces()
+        this.fetchPlaces().catch(() => {})
       }, 400)
     },
     
@@ -255,7 +225,7 @@ export default {
     }
   },
   mounted() {
-    this.fetchPlaces()
+    this.fetchPlaces().catch(() => {})
   }
 }
 </script>
