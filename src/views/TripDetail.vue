@@ -24,19 +24,19 @@
         <aside class="left-side">
           <div class="day-switcher">
             <el-button
-              v-for="(d, idx) in tripDays"
-              :key="idx"
-              :type="currentDay === (idx + 1) ? 'primary' : 'text'"
-              @click="currentDay = idx + 1"
-            >
-              第 {{ idx + 1 }} 天
+            v-for="day in tripDays"
+            :key="day.id"
+            :type="currentDay === day.day ? 'primary' : 'text'"
+            @click="changeDay(day.day)"         
+               >
+              第 {{day.day}} 天
             </el-button>
             <el-button
               type="text"
               icon="Delete"
               size="small"
               class="del-day-btn"
-              @click="onDeleteDay(idx)"
+              @click="onDeleteDay(day.id - 1)"
             />
           </div>
           <div class="items-list">
@@ -134,7 +134,7 @@
                 </el-select>
               </el-form-item>
               <el-form-item>
-                <el-button size="small" @click="saveItem">保存</el-button>
+                <el-button size="small" @click="saveTrip">保存</el-button>
                 <el-button size="small" type="danger" @click="removeItem">
                   删除
                 </el-button>
@@ -234,6 +234,15 @@ import PlaceSearch from './PlaceSearch.vue'
 import ExportPanel from './ExportPanel.vue'
 import { ChatDotRound, Close } from '@element-plus/icons-vue'
 import apiClient from '@/services/apiClient'
+import { 
+  getTripDetail, 
+  addNewDay, 
+  deleteDay, 
+  getDayItems, 
+  addNewItem, 
+  updateItem, 
+  deleteItem,
+} from '@/services/Trip_Service'
 const AMAP_KEY = 'ca55a345ea12a37b1e00830ee7f62380'
 const INPUTTIPS_URL = 'https://restapi.amap.com/v3/assistant/inputtips'
 
@@ -252,20 +261,19 @@ export default {
     return {
       heroTravel,
       heroTravel5,
+      tripId: 1,
       trip: {
-        title: '北京 5 日游',
-        status: '进行中'
+        title: '',
+        status: '进行中',
+        days: 0,
+
+
       },
-      tripDays: 5,
-      currentDay: 2,
-      dayItems: [
-        { id: 'b1-1', name: '天安门广场',   time: '08:00', note: '升旗仪式，建议提前 30 min 到', visited: false,priority: 'high', lnglat: [116.397428, 39.90923] },
-        { id: 'b1-2', name: '故宫博物院',   time: '09:30', note: '提前网上购票，午门进神武门出', visited: false,priority: 'high', lnglat: [116.397731, 39.916485] },
-        { id: 'b1-3', name: '景山公园',     time: '14:00', note: '登顶万春楼俯瞰紫禁城全景', visited: false,priority: 'medium', lnglat: [116.391467, 39.925929] },
-        { id: 'b1-4', name: '王府井步行街', time: '17:30', note: '老字号小吃+伴手礼', visited: false,priority: 'low', lnglat: [116.413384, 39.913312] }
-      ],
+      tripDays: [],
+      currentDay: 1,
+      dayItems: [],
       selectedItem: null,
-      lastSaved: new Date().toLocaleString(),
+      lastSaved: '',
       daySummary: {
         // overview: '中轴线核心一日：天安门升旗→故宫深度游→景山俯瞰→王府井夜宵。',
         totalDistance: '7.8 km',
@@ -316,12 +324,12 @@ export default {
     }
   },
 
-  mounted() {
-    this.$nextTick(() => {
-      this.initMap()
-      this.drawRoute()
-    })
-  },
+  // mounted() {
+  //   this.$nextTick(() => {
+  //     this.initMap()
+  //     this.drawRoute()
+  //   })
+  // },
   computed: {
     dayOverviewText() {
       if (!this.dayItems || this.dayItems.length === 0) {
@@ -334,6 +342,72 @@ export default {
     }
   },
   methods: {
+
+     // 加载行程详情
+  async loadTripData() {
+    try {
+      const response = await getTripDetail(this.tripId)
+      if (response.data.success) {
+        this.trip = response.data.data
+        
+        // 初始化天数数组
+        this.tripDays = Array.from({ length: this.trip.days }, (_, i) => ({
+          id: i + 1,
+          day: i + 1,
+          items: []
+        }))
+      }
+    } catch (error) {
+      console.error('加载行程失败:', error)
+      this.$message.error('加载行程失败')
+    }
+  },
+  
+  // 加载某天的行程项
+  async loadDayItems(day) {
+    try {
+      const response = await getDayItems(this.tripId, day)
+      if (response.data.success) {
+        this.dayItems = response.data.data.items.map(item => ({
+          id: item.id.toString(),
+          name: item.name,
+          time: item.time,
+          note: item.note,
+          priority: item.priority,
+          visited: item.visited || false,
+          lnglat: item.lnglat || null
+        }))
+        
+        // 更新地图
+        await this.drawRoute()
+        
+        // 更新概览
+        this.updateDayOverview()
+      }
+    } catch (error) {
+      console.error('加载行程项失败:', error)
+      this.dayItems = []
+    }
+  },
+    
+  // 切换天数
+  async changeDay(day) {
+    this.currentDay = day
+    await this.loadDayItems(day)
+  },
+    async created() {
+    // 从路由获取tripId
+    this.tripId = this.$route.params.id || 1
+    
+    // 加载行程数据
+    await this.loadTripData()
+    await this.loadDayItems(this.currentDay)
+    
+    this.$nextTick(() => {
+      this.initMap()
+      this.drawRoute()
+    })
+  },
     /* 1. 初始化地图 */
     initMap() {
       const dom = this.$refs.mapContainer
@@ -733,32 +807,163 @@ export default {
       })
     },
     
-    addNewDay() {
-      this.tripDays += 1
-      this.currentDay = this.tripDays
-      this.$nextTick(() => {
-        const list = this.$el.querySelector('.items-list')
-        if (list) list.scrollTop = list.scrollHeight
-      })
-    },
-    
-    onDeleteDay(index) {
-      if (this.tripDays <= 1) return
-
-      this.$confirm(`确定删除第 ${index + 1} 天？`, '提示', {
-        confirmButtonText: '删',
+  // 添加新的一天
+  async addNewDay() {
+    try {
+      const newDayNum = this.tripDays.length + 1
+      const response = await addNewDay(this.tripId, newDayNum)
+      
+      if (response.data.success) {
+        this.tripDays.push({
+          id: newDayNum,
+          day: newDayNum,
+          items: []
+        })
+        this.currentDay = newDayNum
+        this.$message.success('新的一天已添加')
+      }
+    } catch (error) {
+      console.error('添加新天失败:', error)
+      this.$message.error('添加失败')
+    }
+  },    
+  // 删除某一天
+  async onDeleteDay(dayIndex) {
+    try {
+      const dayId = dayIndex + 1
+      
+      await this.$confirm(`确定删除第 ${dayId} 天？`, '提示', {
+        confirmButtonText: '删除',
         cancelButtonText: '取消',
         type: 'warning'
-      }).then(() => {
-        this.tripDays -= 1
-        if (this.currentDay === index + 1) {
-          this.currentDay = Math.max(1, index)
-        } else if (this.currentDay > index + 1) {
+      })
+      
+      const response = await deleteDay(this.tripId, dayId)
+      if (response.data.success) {
+        this.tripDays.splice(dayIndex, 1)
+        
+        // 调整当前选中的天
+        if (this.currentDay === dayId) {
+          this.currentDay = Math.max(1, dayId - 1)
+        } else if (this.currentDay > dayId) {
           this.currentDay -= 1
         }
-      }).catch(() => {})
-    },
+        
+        await this.loadDayItems(this.currentDay)
+        this.$message.success('删除成功')
+      }
+    } catch (error) {
+      if (error !== 'cancel') {
+        console.error('删除天失败:', error)
+        this.$message.error('删除失败')
+      }
+    }
+  },   
+  
+    // 添加新行程项
+    async addNewItem() {
+    try {
+      const newItem = {
+        name: '新地点',
+        time: '09:00',
+        note: '',
+        priority: 'medium',
+        lnglat: null
+      }
+      
+      const response = await addNewItem(this.tripId, this.currentDay, newItem)
+      
+      if (response.data.success) {
+        const itemId = response.data.data.itemId
+        newItem.id = itemId.toString()
+        newItem.visited = false
+        
+        this.dayItems.push(newItem)
+        this.selectedItem = newItem
+        
+        this.$message.success('行程项已添加')
+      }
+    } catch (error) {
+      console.error('添加行程项失败:', error)
+      this.$message.error('添加失败')
+    }
+  },
+
+    // 保存行程项
+  async saveItem() {
+    if (!this.selectedItem) return
     
+    try {
+      const itemData = {
+        name: this.selectedItem.name,
+        time: this.selectedItem.time,
+        note: this.selectedItem.note || '',
+        priority: this.selectedItem.priority,
+        lnglat: this.selectedItem.lnglat
+      }
+      
+      // 如果有坐标，确保发送正确的格式
+      if (itemData.lnglat && Array.isArray(itemData.lnglat)) {
+        itemData.lnglat = [itemData.lnglat[0], itemData.lnglat[1]]
+      }
+      
+      const response = await updateItem(
+        this.tripId,
+        this.currentDay,
+        this.selectedItem.id,
+        itemData
+      )
+      
+      if (response.data.success) {
+        // 更新本地数据
+        const index = this.dayItems.findIndex(item => item.id === this.selectedItem.id)
+        if (index !== -1) {
+          this.dayItems[index] = { ...this.selectedItem }
+        }
+        
+        // 重新绘制路线
+        await this.drawRoute()
+        
+        this.lastSaved = new Date().toLocaleString()
+        this.$message.success('保存成功')
+      }
+    } catch (error) {
+      console.error('保存失败:', error)
+      this.$message.error('保存失败')
+    }
+  },
+    // 删除行程项
+    async removeItem() {
+    if (!this.selectedItem) return
+    
+    try {
+      await this.$confirm('确定删除这个行程项？', '提示', {
+        confirmButtonText: '删除',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+      
+      const response = await deleteItem(
+        this.tripId,
+        this.currentDay,
+        this.selectedItem.id
+      )
+      
+      if (response.data.success) {
+        this.dayItems = this.dayItems.filter(item => item.id !== this.selectedItem.id)
+        this.selectedItem = null
+        
+        await this.drawRoute()
+        this.$message.success('删除成功')
+      }
+    } catch (error) {
+      if (error !== 'cancel') {
+        console.error('删除失败:', error)
+        this.$message.error('删除失败')
+      }
+    }
+  },
+  
     selectItem(item) { 
       this.selectedItem = item
     },
@@ -1324,6 +1529,8 @@ async send() {
   align-items: center;
   border: radius 10px ;
   background: rgba(247, 246, 248, 0.9);
+  position: fixed;
+  inset: auto 0 0 0;
 }
 .trip-footer span {
   color: #200707;
@@ -1465,4 +1672,5 @@ async send() {
   background: #ffffff;
 }
 .ai-footer .el-input{ flex: 1; margin-right: 8px; }
+
 </style>

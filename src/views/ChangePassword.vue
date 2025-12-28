@@ -295,8 +295,10 @@ export default {
 }
 
 .password-content {
+  width:40%;
   flex: 1;
   padding: 40px 0;
+  height: 50%;
 }
 
 .section-title {
@@ -304,7 +306,7 @@ export default {
   font-weight: 600;
   margin-bottom: 20px;
   color: #2a2785;
-  text-align: left;
+  text-align: center;
 }
 
 .form-section {

@@ -33,13 +33,13 @@ apiClient.interceptors.response.use(
   },
   error => {
     const { response } = error
-    
+
     // 处理未授权错误
     if (response && response.status === 401) {
       localStorage.removeItem('token')
       router.push('/login')
     }
-    
+
     // 处理其他错误
     if (response) {
       // 服务器返回的错误信息
@@ -47,7 +47,7 @@ apiClient.interceptors.response.use(
       const backendMessage = backendError?.message || response.data?.message
       const backendCode = backendError?.code
       const errorMessage = backendCode ? `[${backendCode}] ${backendMessage || '请求失败，请稍后重试'}` : (backendMessage || '请求失败，请稍后重试')
-      
+
       // 将原始error对象传递出去，保持结构
       const enhancedError = new Error(errorMessage)
       enhancedError.response = response
@@ -60,3 +60,5 @@ apiClient.interceptors.response.use(
 )
 
 export default apiClient
+
+
