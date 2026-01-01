@@ -1,5 +1,26 @@
 // apiClient.js 中需要添加的接口函数
 import apiClient from './apiClient'
+
+// 创建行程 
+export const createTrip = (tripData) => {
+  return apiClient.post('/v3/trips', tripData)
+}
+
+// 获取行程列表 
+export const getTripsList = () => {
+  return apiClient.get('/v3/trips')
+}
+
+// 删除行程 
+export const deleteTrip = (tripId) => {
+  return apiClient.delete(`/v3/trips/${tripId}`)
+}
+
+// 更新行程 
+export const updateTrip = (tripId, tripData) => {
+  return apiClient.put(`/v3/trips/${tripId}`, tripData)
+}
+
 // 获取行程详情
 export const getTripDetail = (tripId) => {
   return apiClient.get(`/v3/trips/${tripId}`)
