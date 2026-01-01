@@ -352,9 +352,12 @@ export default {
       console.log('搜索关键字:', this.searchKey)
     },
     editTrip(id) {
+      console.log('点击编辑，传入 id:', id)
       const t = this.trips.find(v => v.id === id)
-      if (!t) return
-      this.editForm = { ...t }   // 深拷贝一份
+      console.log('找到的 trip:', t)
+      // if (!t) return
+        this.editForm = { ...t }   // 深拷贝一份
+      console.log('editForm:', this.editForm)
      this.editVisible = true
     },
 
@@ -369,20 +372,17 @@ export default {
     //   this.resetEdit()
     // },
     async saveEdit() {
-      try {
+      console.log('保存时 editForm.id:', this.editForm.id)
         await updateTrip(this.editForm.id, {
           title: this.editForm.title,
-          startDate: this.editForm.startDate,
-          endDate: this.editForm.endDate,
-          days: this.editForm.days
+          startDate: this.editForm.startDate+ 'T00:00:00Z',
+          endDate: this.editForm.endDate+ 'T00:00:00Z'
         })
 
         this.$message.success('已保存')
         this.fetchTrips()
+        console.log('最新 trips:', this.trips)
         this.resetEdit()
-      } catch (e) {
-        this.$message.error('保存失败')
-      }
     },
 
     resetEdit() {

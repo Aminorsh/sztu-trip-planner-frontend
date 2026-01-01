@@ -15,7 +15,7 @@
           <!-- <el-button size="mini" @click="saveTrip">保存</el-button> -->
           <!-- <el-button size="mini" @click="shareTrip">分享</el-button> -->
           <el-button size="mini" @click="GoDashboard">返回</el-button>
-          <el-button size="mini" @click="exportVisible = true">导出</el-button>
+          <!-- <el-button size="mini" @click="exportVisible = true">导出</el-button> -->
           <el-button size="mini" @click="showPlaceSearch = true">添加地点</el-button>
         </div>
       </header>

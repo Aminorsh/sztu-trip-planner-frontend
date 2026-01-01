@@ -49,7 +49,7 @@
       <div class="container hero-inner">
         <div class="hero-text">
           <h1 class="hero-title ">创造你的旅程 · 留下真实足迹</h1>
-          <p class="hero-subtitle">拖拽景点 · 可视化地图 · 与好友同步规划</p>
+          <p class="hero-subtitle">自定义行程 · 可视化地图 · 智能AI问答</p>
           <el-button class="btn-small btn-soft-cta " @click="onGetStarted">马上开始</el-button>
         </div>
       </div>
@@ -155,6 +155,7 @@ import iconDrag from '/src/assets/images/1.jpg'
 import iconMap from '/src/assets/images/2.jpg'
 import iconShare from '/src/assets/images/3.jpg'
 import iconSharei from '/src/assets/images/4.jpg'
+import iconAI from '/src/assets/images/4.jpg'
 import avatar1 from '/src/assets/images/8.jpg'
 import avatar2 from '/src/assets/images/9.jpg'
 import avatar3 from '/src/assets/images/10.jpg'
@@ -250,10 +251,15 @@ export default {
     const heroImages = [img1, img2, img3]
     const activeSlide = ref(0)
     const features = [
-      { id: 1, icon: iconDrag, title: '拖拽规划', description: '将景点拖入日程，自由排序构建专属行程' },
-      { id: 2, icon: iconMap, title: '地图可视化', description: '在地图上查看路线、足迹、距离与时间' },
-      { id: 3, icon: iconShare, title: '协作分享', description: '邀请朋友一起编辑行程,实时同步更新' },
-      { id: 4, icon: iconSharei, title: '路线优化', description: 'AI智能规划路线,自动调整景点顺序' }
+    
+      { id: 1, icon: iconDrag,  title: '行程规划', description: '自由添加/删除景点，自定义个性化生成专属日程' },
+      { id: 2, icon: iconMap,  title: '地图可视化', description: '地图实时展示路线、距离、耗时与足迹' },
+      { id: 3, icon: iconShare, title: '地点详情可查', description: '一键查看景点介绍、开放时间、交通与门票' },
+      {id: 4, icon: iconAI, title: 'DeepSeek 实时问答', description: 'AI 随时解答交通、美食、住宿等问题'}
+      // { id: 1, icon: iconDrag, title: '拖拽规划', description: '将景点拖入日程，自由排序构建专属行程' },
+      // { id: 2, icon: iconMap, title: '地图可视化', description: '在地图上查看路线、足迹、距离与时间' },
+      // { id: 3, icon: iconShare, title: '协作分享', description: '邀请朋友一起编辑行程,实时同步更新' },
+      // { id: 4, icon: iconSharei, title: '路线优化', description: 'AI智能规划路线,自动调整景点顺序' }
     ]
     const exampleTrips = [
       { id: 'trip1', coverImage: trip1img, title: '东京＋箱根 5 日游', days: 5, stops: 8 },
@@ -262,8 +268,8 @@ export default {
     ]
     const testimonials = [
       { id: 't1', avatar: avatar1, name: '张女士', text: '用了这个工具后，我轻松规划了环岛旅行，太方便了！' },
-      { id: 't2', avatar: avatar2, name: '李先生', text: '和朋友一起编辑行程，看到实时轨迹非常兴奋。' },
-      { id: 't3', avatar: avatar3, name: '王小姐', text: '分享功能太棒了，家人也能看到我的旅程动态。' }
+      { id: 't2', avatar: avatar2, name: '李先生', text: '有了地图，看到整体行程轨迹非常兴奋。' },
+      { id: 't3', avatar: avatar3, name: '王小姐', text: 'AI功能太棒了，我在制定行程过程中可以与ai交互，让我的旅行计划更完美了。' }
     ]
 
 
