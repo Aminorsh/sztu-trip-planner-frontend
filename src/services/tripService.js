@@ -85,43 +85,24 @@ const mockDeleteTrip = async (tripId) => {
 
 
 export function fetchTrips() {
-  if (config.USE_MOCK) {
-    console.log('[Mock] fetchTrips');
-    return mockFetchTrips();
-  }
-  return apiClient.get('/trips');
+  return apiClient.get('/v3/trips')
 }
 
 export function fetchTripDetail(tripId) {
-  if (config.USE_MOCK) {
-    console.log('[Mock] fetchTripDetail:', tripId);
-    return mockFetchTripDetail(tripId);
-  }
-  return apiClient.get(`/trips/${tripId}`);
+  return apiClient.get(`/v3/trips/${tripId}`)
 }
 
 export function createTrip(tripData) {
-  if (config.USE_MOCK) {
-    console.log('[Mock] createTrip:', tripData);
-    return mockCreateTrip(tripData);
-  }
-  return apiClient.post('/trips', tripData);
+  // 接口需要 title, start_date, end_date
+  return apiClient.post('/v3/trips', tripData)
 }
 
 export function updateTrip(tripId, tripData) {
-  if (config.USE_MOCK) {
-    console.log('[Mock] updateTrip:', tripId, tripData);
-    return mockUpdateTrip(tripId, tripData);
-  }
-  return apiClient.put(`/trips/${tripId}`, tripData);
+  return apiClient.put(`/v3/trips/${tripId}`, tripData)
 }
 
 export function deleteTrip(tripId) {
-  if (config.USE_MOCK) {
-    console.log('[Mock] deleteTrip:', tripId);
-    return mockDeleteTrip(tripId);
-  }
-  return apiClient.delete(`/trips/${tripId}`);
+  return apiClient.delete(`/v3/trips/${tripId}`)
 }
 
 
