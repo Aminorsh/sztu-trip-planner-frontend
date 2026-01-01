@@ -14,6 +14,7 @@
         <div class="header-right">
           <!-- <el-button size="mini" @click="saveTrip">保存</el-button> -->
           <!-- <el-button size="mini" @click="shareTrip">分享</el-button> -->
+          <el-button size="mini" @click="GoDashboard">返回</el-button>
           <el-button size="mini" @click="exportVisible = true">导出</el-button>
           <el-button size="mini" @click="showPlaceSearch = true">添加地点</el-button>
         </div>
@@ -24,20 +25,20 @@
         <aside class="left-side">
           <div class="day-switcher">
             <el-button
-            v-for="day in tripDays"
-            :key="day.id"
-            :type="currentDay === day.day ? 'primary' : 'text'"
-            @click="changeDay(day.day)"         
+              v-for="day in tripDays"
+              :key="day.id"
+              :type="currentDay === day.day ? 'primary' : 'text'"
+              @click="handleSelectDay(day.day)"         
                >
               第 {{day.day}} 天
-            </el-button>
-            <el-button
-              type="text"
-              icon="Delete"
-              size="small"
-              class="del-day-btn"
-              @click="onDeleteDay(day.id - 1)"
-            />
+              <el-button
+                type="text"
+                icon="Delete"
+                size="small"
+                class="del-day-btn"
+                @click="onDeleteDay(day.id - 1)"
+              />
+            </el-button >
           </div>
           <div class="items-list">
             <draggable v-model="dayItems" handle=".drag-handle" item-key="id">
@@ -66,7 +67,7 @@
               <el-button
                 type="text"
                 class="add-item-btn"
-                @click="addNewItem"
+                @click="openNewItemDialog"
                 >
                 + 添加行程项
               </el-button>
@@ -134,7 +135,7 @@
                 </el-select>
               </el-form-item>
               <el-form-item>
-                <el-button size="small" @click="saveTrip">保存</el-button>
+                <el-button size="small" @click="saveItem">保存</el-button>
                 <el-button size="small" type="danger" @click="removeItem">
                   删除
                 </el-button>
@@ -160,7 +161,7 @@
         <el-button size="mini" @click="optimizeRoute">优化路线</el-button>
       </footer>
     </div>
-
+    
     <!-- 弹窗：地点搜索 -->
     <PlaceSearch
       v-if="showPlaceSearch"
@@ -175,6 +176,62 @@
       :trip-data="trip"
       @exported="handleExported"
     />
+
+    <el-dialog
+      title="添加新行程项"
+      v-model="showNewItemDialog"
+      width="400px"
+    >
+      <el-form :model="newItemForm" label-position="top">
+        <!-- <el-form-item label="名称">
+          <el-input v-model="newItemForm.name" placeholder="请输入地点名称" />
+        </el-form-item> -->
+
+        <el-form-item label="名称">
+          <el-autocomplete
+            v-model="newItemForm.name"
+            placeholder="请输入地点名称"
+            :fetch-suggestions="queryPoiSuggestions"
+            :trigger-on-focus="false"
+            :debounce="300"
+            clearable
+            style="width:100%"
+            @select="onPoiSelect"
+          />
+        </el-form-item>
+
+        <el-form-item label="时间">
+          <el-time-picker
+            v-model="newItemForm.time"
+            placeholder="选择时间"
+            :format="'HH:mm'"           
+            :value-format="'HH:mm'"    
+            clearable
+            ></el-time-picker>
+        </el-form-item>
+        <!-- <el-form-item label="时间">
+          <el-input v-model="newItemForm.time" placeholder="09:00" />
+        </el-form-item> -->
+
+        <el-form-item label="备注">
+          <el-input type="textarea" v-model="newItemForm.note" placeholder="备注信息" />
+        </el-form-item>
+
+        <el-form-item label="优先级">
+          <el-select v-model="newItemForm.priority" placeholder="优先级">
+            <el-option label="高" value="high"></el-option>
+            <el-option label="中" value="medium"></el-option>
+            <el-option label="低" value="low"></el-option>
+          </el-select>
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="onCancel">取消</el-button>
+        <el-button type="primary" @click="add_NewItem">确认</el-button>
+      </template>
+    </el-dialog>
+
   </div>
 
     <!-- 1. 悬浮球 -->
@@ -259,9 +316,10 @@ export default {
   },
   data() {
     return {
+      showNewItemDialog: false, 
       heroTravel,
       heroTravel5,
-      tripId: 1,
+      tripId: null,
       trip: {
         title: '',
         status: '进行中',
@@ -270,8 +328,14 @@ export default {
 
       },
       tripDays: [],
-      currentDay: 1,
+      currentDay:1,
       dayItems: [],
+      newItemForm: {        // 弹窗表单数据
+        name: "",
+        time: "",
+        note: "",
+        priority: "medium",
+      },
       selectedItem: null,
       lastSaved: '',
       daySummary: {
@@ -330,7 +394,20 @@ export default {
   //     this.drawRoute()
   //   })
   // },
+
+  async created() {
+    console.log(this.$route.params.tripId)
+    this.tripId = this.$route.params.tripId || 1
+    await this.loadTripData()
+    // await this.loadDayItems(this.currentDay)
+    this.$nextTick(() => {
+      this.initMap()
+      this.drawRoute()
+    })
+  },
   computed: {
+
+
     dayOverviewText() {
       if (!this.dayItems || this.dayItems.length === 0) {
         return '暂无行程安排'
@@ -342,20 +419,67 @@ export default {
     }
   },
   methods: {
+    // 用户点击“第 N 天”
+  async handleSelectDay(day) {
+    this.currentDay = day                // 1. 更新高亮
+    await this.loadDayItems(day)         // 2. 加载该天 items
+  },
 
+  // 加载某天的 items 并重新画线
+  async loadDayItems(day) {
+    const dayObj = this.tripDays.find(d => d.day === day)
+    this.dayItems = dayObj ? dayObj.items : []
+    await this.drawRoute()               // 3. 立即画线
+    this.updateDayOverview()
+  },
+    GoDashboard(){
+      this.$router.push({ name: 'Dashboard' })
+    },
+    onCancel() {
+      this.resetNewItemForm()   // 清空
+      this.showNewItemDialog = false  // 关窗
+    },
+    openNewItemDialog() {
+    // 清空表单
+      this.newItemForm = {
+        name: "",
+        time: "",
+        note: "",
+        priority: "medium",
+      };
+      this.showNewItemDialog = true; // 打开弹窗
+    },
      // 加载行程详情
   async loadTripData() {
+    console.log('loadTripData')
+    console.log('tripId:', this.tripId)
     try {
       const response = await getTripDetail(this.tripId)
-      if (response.data.success) {
-        this.trip = response.data.data
-        
+      // console.log(response.data)
+      // console.log(response.data.days[0])
+      if (1) {
+        // this.trip = response.data.data
+        this.trip.title=response.data.title
         // 初始化天数数组
-        this.tripDays = Array.from({ length: this.trip.days }, (_, i) => ({
-          id: i + 1,
-          day: i + 1,
-          items: []
+        // this.tripDays = Array.from({ length: this.trip.days }, (_, i) => ({
+        //   id: i + 1,
+        //   day: i + 1,
+        //   items: []
+        // }))
+        // console.log('trip:', 1)
+      //  this.tripDays=response.data.days
+       
+          this.tripDays = response.data.days.map(d => ({
+            id: d.day,
+            day: d.day,
+            items: d.items || [],
+            // lnglat: d.lnglat || null
+            
         }))
+        this.dayItems=response.data.days[0].items
+        console.log('tripDays:', this.tripDays[0].items)
+        this.currentDay = this.tripDays[0]?.day || 1
+        this.dayItems = this.tripDays[0]?.items || []
       }
     } catch (error) {
       console.error('加载行程失败:', error)
@@ -365,48 +489,23 @@ export default {
   
   // 加载某天的行程项
   async loadDayItems(day) {
-    try {
-      const response = await getDayItems(this.tripId, day)
-      if (response.data.success) {
-        this.dayItems = response.data.data.items.map(item => ({
-          id: item.id.toString(),
-          name: item.name,
-          time: item.time,
-          note: item.note,
-          priority: item.priority,
-          visited: item.visited || false,
-          lnglat: item.lnglat || null
-        }))
-        
-        // 更新地图
-        await this.drawRoute()
-        
-        // 更新概览
-        this.updateDayOverview()
-      }
-    } catch (error) {
-      console.error('加载行程项失败:', error)
-      this.dayItems = []
-    }
-  },
-    
+    /* 1. 取天 */
+    const dayObj = this.tripDays.find(d => d.day === day)
+    this.dayItems = dayObj ? dayObj.items : []
+
+    /* 2. 强制重新画线（drawRoute 里会再次反查坐标） */
+    await this.drawRoute()
+
+    /* 3. 更新概览文字 */
+    this.updateDayOverview()
+  },    
   // 切换天数
-  async changeDay(day) {
+  changeDay(day) {
     this.currentDay = day
-    await this.loadDayItems(day)
-  },
-    async created() {
-    // 从路由获取tripId
-    this.tripId = this.$route.params.id || 1
-    
-    // 加载行程数据
-    await this.loadTripData()
-    await this.loadDayItems(this.currentDay)
-    
-    this.$nextTick(() => {
-      this.initMap()
-      this.drawRoute()
-    })
+    const dayObj = this.tripDays.find(d => d.day === day)
+    this.dayItems = dayObj ? dayObj.items : []
+
+    this.selectedItem = null
   },
     /* 1. 初始化地图 */
     initMap() {
@@ -794,19 +893,7 @@ export default {
     shareTrip() {
       console.log('分享行程')
     },
-    
-    addNewItem() {
-      const newId = `item${Date.now()}`
-      this.dayItems.push({ 
-        id: newId, 
-        name: '', 
-        time: '', 
-        note: '', 
-        priority: '低',
-        lnglat: null
-      })
-    },
-    
+        
   // 添加新的一天
   async addNewDay() {
     try {
@@ -829,63 +916,121 @@ export default {
   },    
   // 删除某一天
   async onDeleteDay(dayIndex) {
-    try {
       const dayId = dayIndex + 1
-      
+
       await this.$confirm(`确定删除第 ${dayId} 天？`, '提示', {
         confirmButtonText: '删除',
         cancelButtonText: '取消',
         type: 'warning'
       })
-      
+
+      /* 1. 先调接口 */
       const response = await deleteDay(this.tripId, dayId)
-      if (response.data.success) {
-        this.tripDays.splice(dayIndex, 1)
-        
-        // 调整当前选中的天
-        if (this.currentDay === dayId) {
-          this.currentDay = Math.max(1, dayId - 1)
-        } else if (this.currentDay > dayId) {
-          this.currentDay -= 1
-        }
-        
-        await this.loadDayItems(this.currentDay)
-        this.$message.success('删除成功')
+      if (!response.data.success) return
+
+      /* 2. 前端兜底：把该条 items 清成 [] 再删整条 */
+      this.tripDays[dayIndex].items = []          // 先清空
+      this.tripDays.splice(dayIndex, 1)           // 再剔掉该天对象
+
+      /* 3. 后续天数 day 值前移 1 */
+      for (let i = dayIndex; i < this.tripDays.length; i++) {
+        this.tripDays[i].day -= 1
       }
-    } catch (error) {
-      if (error !== 'cancel') {
-        console.error('删除天失败:', error)
-        this.$message.error('删除失败')
+
+      /* 4. 修正当前选中天 */
+      if (this.currentDay === dayId) {
+        this.currentDay = Math.max(1, dayId - 1)
+      } else if (this.currentDay > dayId) {
+        this.currentDay -= 1
       }
-    }
-  },   
-  
-    // 添加新行程项
-    async addNewItem() {
-    try {
+
+      /* 5. 重新拉该天数据（后端此时即使把孤儿 items 归到别天，也会被过滤掉） */
+      await this.loadDayItems(this.currentDay)
+
+      this.$message.success('删除成功')
+    },
+  // 添加新行程项
+  //   async add_NewItem() {
+  //   try {
+  //     const newItem = {
+  //       name: this.newItemForm.name,
+  //       time: this.newItemForm.time,
+  //       note: this.newItemForm.note,
+  //       priority: this.newItemForm.priority,
+  //     }
+      
+  //     const response = await addNewItem(this.tripId, this.currentDay, newItem)
+      
+  //     if (1) {
+  //       const itemId = response.data.data.itemId
+  //       newItem.id = itemId.toString()
+  //       newItem.visited = false
+        
+  //       this.dayItems.push(newItem)
+  //       this.selectedItem = newItem
+        
+  //       this.$message.success('行程项已添加')
+  //     }
+  //   } catch (error) {
+  //     console.error('添加行程项失败:', error)
+  //     this.$message.error('添加失败')
+  //   }
+  // },
+  async add_NewItem() {
+      // 1️⃣ 构建新行程项数据
       const newItem = {
-        name: '新地点',
-        time: '09:00',
-        note: '',
-        priority: 'medium',
-        lnglat: null
+        name: this.newItemForm.name,
+        time: this.newItemForm.time,
+        note: this.newItemForm.note,
+        priority: this.newItemForm.priority,
       }
-      
+      if (newItem.name?.trim()) {
+        newItem.lnglat = await this.getLocationByName(newItem.name)
+      }
+      // 2️ 调用后端接口添加
       const response = await addNewItem(this.tripId, this.currentDay, newItem)
-      
-      if (response.data.success) {
-        const itemId = response.data.data.itemId
+      console.log('添加行程项响应数据:', response)
+      console.log('添加行程项响应数据:', response.data)
+      console.log('添加行程项响应数据:', response.data.itemId)
+      // 3️ 检查返回结果
+      console.log('【4】真的要取 itemId 了', response.data?.itemId)
+      const itemId = response.data?.itemId
+      if (itemId) {
+        // const itemId = response.data.data.itemId
         newItem.id = itemId.toString()
         newItem.visited = false
-        
-        this.dayItems.push(newItem)
+
+        // 5️ 同步更新 tripDays 对应天的 items（保证 dayItems 与 tripDays[currentDay-1].items 一致）
+        const dayObj = this.tripDays.find(d => d.day === this.currentDay)
+        if (dayObj) {
+          dayObj.items.push(newItem)
+          console.log('【5】tripDays[currentDay-1].items:', dayObj.items)
+        }
+
+        // 6️ 设置右侧编辑栏选中
         this.selectedItem = newItem
         
+        
+
+        // 7️ 关闭弹窗
+        this.showNewItemDialog = false
+
+        // 8️ 成功提示
         this.$message.success('行程项已添加')
+
+        // 9️ 可选：重新绘制地图路线
+        await this.drawRoute()
+        // resetNewItemForm()
+      } else {
+        this.$message.error('添加行程项失败，请稍后重试')
       }
-    } catch (error) {
-      console.error('添加行程项失败:', error)
-      this.$message.error('添加失败')
+  },
+  resetNewItemForm() {
+    this.newItemForm = {
+      name: '',
+      time: '',
+      note: '',
+      priority: 'medium',
     }
   },
 

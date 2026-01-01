@@ -202,6 +202,12 @@ import img6 from '@/assets/images/10.jpg'
 import img7 from '@/assets/images/7.jpg'
 import img8 from '@/assets/images/8.jpg'
 import img9 from '@/assets/images/9.jpg'
+import {
+  createTrip,
+  getTripsList,
+  deleteTrip as deleteTripApi,
+  updateTrip
+} from '@/services/Trip_Service'
 
 import {
   View, Edit, Delete, Share, House, CirclePlus, Search
@@ -214,7 +220,7 @@ export default {
   data() {
     return {
       heroTravel,
-      img1,img2,img3,img4,img5,img6,img7,img8,img9,
+      coverPool: [img1,img2,img3,img4,img5, img6,img7, img8, img9],
       editVisible: false,  
       newTripForm: {      // 新建表单
       title: '',
@@ -236,70 +242,108 @@ export default {
         avatar: ''
       },
       searchKey: '',
-      trips: [
-        {
-          id: 't1',
-          coverImage: img1,
-          title: '东京＋箱根 5 日游',
-          startDate: '2025-06-01',
-          endDate: '2025-06-05',
-          days: 5
-        },
-        {
-          id: 't2',
-          coverImage: img2,
-          title: '巴黎 7 日文化游',
-          startDate: '2025-07-10',
-          endDate: '2025-07-16',
-          days: 7
-        },
-        {
-          id: 't3',
-          coverImage: img3,
-          title: '东南亚海岛 4 日',
-          startDate: '2025-08-01',
-          endDate: '2025-08-04',
-          days: 4
-        },
-        {
-          id: 't4',
-          coverImage: img4,
-          title: '美国国家公园 10 日探险',
-          startDate: '2025-09-01',
-          endDate: '2025-09-10',
-          days: 10
-        },
-        {
-          id: 't5',
-          coverImage: img5,
-          title: '巴厘岛休闲 6 日',
-          startDate: '2025-10-05',
-          endDate: '2025-10-10',
-          days: 6
-        },
-        {
-          id: 't6',
-          coverImage: img6,
-          title: '意大利南部 8 日游',
-          startDate: '2025-11-01',
-          endDate: '2025-11-08',
-          days: 8
-        }
-      ]
+      trips:[]
+      // trips: [
+      //   {
+      //     id: 't1',
+      //     coverImage: img1,
+      //     title: '东京＋箱根 5 日游',
+      //     startDate: '2025-06-01',
+      //     endDate: '2025-06-05',
+      //     days: 5
+      //   },
+      //   {
+      //     id: 't2',
+      //     coverImage: img2,
+      //     title: '巴黎 7 日文化游',
+      //     startDate: '2025-07-10',
+      //     endDate: '2025-07-16',
+      //     days: 7
+      //   },
+      //   {
+      //     id: 't3',
+      //     coverImage: img3,
+      //     title: '东南亚海岛 4 日',
+      //     startDate: '2025-08-01',
+      //     endDate: '2025-08-04',
+      //     days: 4
+      //   },
+      //   {
+      //     id: 't4',
+      //     coverImage: img4,
+      //     title: '美国国家公园 10 日探险',
+      //     startDate: '2025-09-01',
+      //     endDate: '2025-09-10',
+      //     days: 10
+      //   },
+      //   {
+      //     id: 't5',
+      //     coverImage: img5,
+      //     title: '巴厘岛休闲 6 日',
+      //     startDate: '2025-10-05',
+      //     endDate: '2025-10-10',
+      //     days: 6
+      //   },
+      //   {
+      //     id: 't6',
+      //     coverImage: img6,
+      //     title: '意大利南部 8 日游',
+      //     startDate: '2025-11-01',
+      //     endDate: '2025-11-08',
+      //     days: 8
+      //   }
+      // ]
     }
   },
+  mounted() {
+  this.fetchTrips()
+},
+
   methods: {
+
+    randomCover() {
+    return this.coverPool[Math.floor(Math.random() * this.coverPool.length)]
+  },
+    async fetchTrips() {
+      try {
+        const res = await getTripsList()
+        // 假设后端返回 { data: [...] }
+        // this.trips = res.data.data
+        this.trips = res.data.data.map(t => ({
+          id: t.id,
+          title: t.title,
+          coverImage: this.randomCover(),
+          startDate: t.startDate.slice(0, 10),
+          endDate: t.endDate.slice(0, 10),
+          days: Array.isArray(t.days)
+            ? Math.ceil(
+                (new Date(t.endDate) - new Date(t.startDate)) / 86400000
+              ) + 1
+            : t.days
+        }))
+      } catch (err) {
+        this.$message.error('获取行程失败')
+      }
+    },
+
     goHome() {
       this.$router.push({ name: 'Home' })
     },
     viewTrip(tripId) {
       this.$router.push({ name: 'TripDetail', params: { tripId } })
     },
-    editTrip(id) {
-      this.$router.push({ name: 'EditTrip', params: { id } })
-    },
-    deleteTrip(id) {
-      this.trips = this.trips.filter(t => t.id !== id)
+    // editTrip(id) {
+    //   this.$router.push({ name: 'EditTrip', params: { id } })
+    // },
+    async deleteTrip(id) {
+      // this.trips = this.trips.filter(t => t.id !== id)
+      try {
+        await deleteTripApi(id)
+        this.$message.success('删除成功')
+        this.trips = this.trips.filter(t => t.id !== id)
+      } catch (e) {
+        this.$message.error('删除失败')
+      }
     },
     // shareTrip(id) {
     //   this.$router.push({ name: 'ShareTrip', params: { id } })
@@ -314,22 +358,31 @@ export default {
      this.editVisible = true
     },
 
-    calcDays() {
-      if (!this.editForm.startDate || !this.editForm.endDate) return
-      const start = new Date(this.editForm.startDate)
-      const end   = new Date(this.editForm.endDate)
-      const days  = Math.ceil((end - start) / 86400000) + 1
-      this.editForm.days = days > 0 ? days : 1
-    },
 
-    saveEdit() {
-      const idx = this.trips.findIndex(v => v.id === this.editForm.id)
-      if (idx > -1) {
-        // 回写数据
-        this.trips.splice(idx, 1, { ...this.editForm })
+    // saveEdit() {
+    //   const idx = this.trips.findIndex(v => v.id === this.editForm.id)
+    //   if (idx > -1) {
+    //     // 回写数据
+    //     this.trips.splice(idx, 1, { ...this.editForm })
+    //     this.$message.success('已保存')
+    //   }
+    //   this.resetEdit()
+    // },
+    async saveEdit() {
+      try {
+        await updateTrip(this.editForm.id, {
+          title: this.editForm.title,
+          startDate: this.editForm.startDate,
+          endDate: this.editForm.endDate,
+          days: this.editForm.days
+        })
+
         this.$message.success('已保存')
+        this.fetchTrips()
+        this.resetEdit()
+      } catch (e) {
+        this.$message.error('保存失败')
       }
-      this.resetEdit()
     },
 
     resetEdit() {
@@ -339,34 +392,69 @@ export default {
     createNew() {
   this.createVisible = true   // 打开弹窗
 },
+    // calcDays() {
+    //   if (!this.newTripForm.startDate || !this.newTripForm.endDate) return
+    //   const start = new Date(this.newTripForm.startDate)
+    //   const end   = new Date(this.newTripForm.endDate)
+    //   const days  = Math.ceil((end - start) / 86400000) + 1
+    //   this.newTripForm.days = days > 0 ? days : 1
+    // },
     calcDays() {
-      if (!this.newTripForm.startDate || !this.newTripForm.endDate) return
-      const start = new Date(this.newTripForm.startDate)
-      const end   = new Date(this.newTripForm.endDate)
-      const days  = Math.ceil((end - start) / 86400000) + 1
-      this.newTripForm.days = days > 0 ? days : 1
+  // 新建行程
+      if (this.createVisible) {
+        if (!this.newTripForm.startDate || !this.newTripForm.endDate) return
+        const start = new Date(this.newTripForm.startDate)
+        const end   = new Date(this.newTripForm.endDate)
+        const days  = Math.ceil((end - start) / 86400000) + 1
+        this.newTripForm.days = days > 0 ? days : 1
+      }
+
+      // 编辑行程
+      if (this.editVisible) {
+        if (!this.editForm.startDate || !this.editForm.endDate) return
+        const start = new Date(this.editForm.startDate)
+        const end   = new Date(this.editForm.endDate)
+        const days  = Math.ceil((end - start) / 86400000) + 1
+        this.editForm.days = days > 0 ? days : 1
+      }
     },
-    onCreate() {
+
+    async onCreate() {
       if (!this.newTripForm.title || !this.newTripForm.startDate || !this.newTripForm.endDate) {
         this.$message.warning('请填写完整')
         return
       }
       // 随机封面图（6 张里轮播）
       const covers = [this.img1, this.img2, this.img3, this.img4, this.img5, this.img6]
-      const newTrip = {
-        id: 't' + Date.now(),                                      // 随机 id
-        coverImage: covers[Math.floor(Math.random() * covers.length)],
+      const tripData = {
+        // id: 't' + Date.now(),                                      // 随机 id
+        // coverImage: covers[Math.floor(Math.random() * covers.length)],
+        coverImage: this.randomCover() ,// 前端随机封面
         title: this.newTripForm.title,
-        startDate: this.newTripForm.startDate,
-        endDate: this.newTripForm.endDate,
-        days: this.newTripForm.days
+        start_date: this.newTripForm.startDate + 'T00:00:00Z', // 2025-06-01T00:00:00Z
+        end_date: this.newTripForm.endDate + 'T00:00:00Z'
+        // StartDate: this.newTripForm.startDate,
+        // EndDate: this.newTripForm.endDate,
+        // Days: this.newTripForm.days
       }
-      // 追加到列表最前面
-      this.trips.unshift(newTrip)
-      this.$message.success('创建成功')
-      this.resetNewForm()
-      // 立即进入详情页（或改为 EditTrip）
-      this.$router.push({ name: 'TripDetail', params: { id: newTrip.id } })
+      try {
+        const res = await createTrip(tripData)
+        this.$message.success('创建成功')
+
+        // 重新拉取列表（保证和后端一致）
+        this.fetchTrips()
+
+        this.resetNewForm()
+        // this.$router.push({ name: 'TripDetail', params: { id: res.data.id } })
+      } catch (e) {
+        this.$message.error('创建失败')
+      }
+      // // 追加到列表最前面
+      // this.trips.unshift(newTrip)
+      // this.$message.success('创建成功')
+      // this.resetNewForm()
+      // // 立即进入详情页（或改为 EditTrip）
+      // this.$router.push({ name: 'TripDetail', params: { id: newTrip.id } })
     },
     resetNewForm() {
       this.createVisible = false
