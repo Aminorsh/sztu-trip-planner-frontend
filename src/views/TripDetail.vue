@@ -158,7 +158,7 @@
       
       <footer class="trip-footer">
         <span>最后保存时间：{{ lastSaved }}</span>
-        <el-button size="mini" @click="optimizeRoute">优化路线</el-button>
+        <!-- <el-button size="mini" @click="optimizeRoute">优化路线</el-button> -->
       </footer>
     </div>
     
@@ -1079,7 +1079,11 @@ export default {
   },
     // 删除行程项
     async removeItem() {
-    if (!this.selectedItem) return
+      console.log('删除项:', this.selectedItem)
+    if (!this.selectedItem){ 
+      this.$message.warning('没有要删除的项')
+      return
+    }
     
     try {
       await this.$confirm('确定删除这个行程项？', '提示', {
@@ -1093,7 +1097,7 @@ export default {
         this.currentDay,
         this.selectedItem.id
       )
-      
+      console.log('删除',response.data)
       if (response.data.success) {
         this.dayItems = this.dayItems.filter(item => item.id !== this.selectedItem.id)
         this.selectedItem = null
@@ -1113,11 +1117,6 @@ export default {
       this.selectedItem = item
     },
     
-    async removeItem() {
-      this.dayItems = this.dayItems.filter(i => i.id !== this.selectedItem.id)
-      this.selectedItem = null
-      await this.drawRoute()
-    },
     
     
     zoomIn() {

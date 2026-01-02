@@ -117,7 +117,7 @@
       <!-- 中间主内容区 -->
       <main class="main-content">
         <div class="main-header">
-          <div class="greeting">Hello, {{ user.name }}</div>
+          <div class="greeting">我的行程</div>
           <el-input
             v-model="searchKey"
             placeholder="搜索我的行程"
@@ -174,11 +174,12 @@
       <!-- 右边用户信息 / 装饰栏 -->
       <aside class="rightbar">
         <div class="user-info">
-          <img
+          
+          <!-- <img
             :src="user.avatar || heroTravel"
             alt="avatar"
             class="avatar-img-large"
-          />
+          /> -->
           <div class="user-name">{{ user.name }}</div>
           <div class="user-nick">{{ user.nickname }}</div>
         </div>
@@ -305,10 +306,15 @@ export default {
     return this.coverPool[Math.floor(Math.random() * this.coverPool.length)]
   },
     async fetchTrips() {
-      try {
+     
         const res = await getTripsList()
         // 假设后端返回 { data: [...] }
         // this.trips = res.data.data
+        // console.log(res.data.data[0])
+        
+        // this.trips = res.data.data
+        // console.log(2)
+        // console.log(this.trips)
         this.trips = res.data.data.map(t => ({
           id: t.id,
           title: t.title,
@@ -321,9 +327,6 @@ export default {
               ) + 1
             : t.days
         }))
-      } catch (err) {
-        this.$message.error('获取行程失败')
-      }
     },
 
     goHome() {
@@ -373,6 +376,7 @@ export default {
     // },
     async saveEdit() {
       console.log('保存时 editForm.id:', this.editForm.id)
+      console.log(this.editForm)
         await updateTrip(this.editForm.id, {
           title: this.editForm.title,
           startDate: this.editForm.startDate+ 'T00:00:00Z',
@@ -668,6 +672,7 @@ export default {
   align-items: center;
 }
 .user-info {
+  font-size: 15px;
   text-align: center;
   margin-bottom: 32px;
 }
@@ -680,12 +685,16 @@ export default {
 }
 .user-name {
   font-size: 1.3rem;
+  font-size: 25px;
+
   font-weight: 600;
   color: #ffffff;
 }
 .user-nick {
-  font-size: 0.9rem;
-  color: #333399;
+  font-size: 2.0rem;
+  font-size: 25px;
+
+  color: #c1c1d3;
 }
 .right-img {
   width: 100%;
