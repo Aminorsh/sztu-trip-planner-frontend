@@ -483,7 +483,7 @@ export default {
       }
     } catch (error) {
       console.error('加载行程失败:', error)
-      this.$message.error('加载行程失败')
+      this.$message.error('请添加行程')
     }
   },
   
